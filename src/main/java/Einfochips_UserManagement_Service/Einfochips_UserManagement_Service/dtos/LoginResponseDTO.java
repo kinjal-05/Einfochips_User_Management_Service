@@ -7,14 +7,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class LoginResponseDTO {
-	private Long userId;
-	private String email;
-	private Role role;
-	private String message;
-}
+public record LoginResponseDTO(
+		Long id,
+		String email,
+		Role role,
+		String token,       // ← add this
+		String message
+) {}

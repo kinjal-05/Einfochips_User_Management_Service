@@ -14,30 +14,40 @@ import jakarta.persistence.criteria.Predicate;
 
 public class UserSpecification {
 
-	public static Specification<User> filterUsers(String email, Role role, String createdByEmail, String updatedByEmail,
-			LocalDateTime fromDate, LocalDateTime toDate) {
+	public static Specification<User> filterUsers(
+			String email,
+			Role role,
+			Long createdById,
+			Long updatedById,
+			LocalDateTime fromDate,
+			LocalDateTime toDate) {
 
 		return (root, query, cb) -> {
 
 			List<Predicate> predicates = new ArrayList<>();
-			if (email != null && !email.isEmpty()) {
+
+			if (email != null) {
 				predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
 			}
 
 			if (role != null) {
 				predicates.add(cb.equal(root.get("role"), role));
 			}
-			if (createdByEmail != null && !createdByEmail.isEmpty()) {
-				Join<User, User> createdByJoin = root.join("createdBy", JoinType.LEFT);
-				predicates.add(cb.like(cb.lower(createdByJoin.get("email")), "%" + createdByEmail.toLowerCase() + "%"));
-			}
-			if (updatedByEmail != null && !updatedByEmail.isEmpty()) {
-				Join<User, User> updatedByJoin = root.join("updatedBy", JoinType.LEFT);
-				predicates.add(cb.like(cb.lower(updatedByJoin.get("email")), "%" + updatedByEmail.toLowerCase() + "%"));
+
+			if (createdById != null) {
+				predicates.add(cb.equal(root.get("createdById"), createdById));
 			}
 
-			if (fromDate != null && toDate != null) {
-				predicates.add(cb.between(root.get("createdAt"), fromDate, toDate));
+			if (updatedById != null) {
+				predicates.add(cb.equal(root.get("updatedById"), updatedById));
+			}
+
+			if (fromDate != null) {
+				predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
+			}
+
+			if (toDate != null) {
+				predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
 			}
 
 			return cb.and(predicates.toArray(new Predicate[0]));

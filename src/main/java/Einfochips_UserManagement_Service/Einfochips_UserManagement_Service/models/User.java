@@ -2,6 +2,7 @@ package Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.mode
 
 import java.time.LocalDateTime;
 
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -23,31 +24,37 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.hibernate.annotations.Where;
 
 @Entity
-@Table(name = "users", uniqueConstraints = { @UniqueConstraint(columnNames = "email") })
+@Table(
+		name = "users",
+		uniqueConstraints = {
+				@UniqueConstraint(columnNames = {"um_email", "um_deleted_timestamp"})
+		}
+)
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Where(clause = "um_is_deleted = false")
 public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "um_id", updatable = false, nullable = false)
+	@EqualsAndHashCode.Include
 	private Long id;
 
 	@Email(message = "Invalid Email Format")
 	@NotBlank(message = "Email is Required")
-	@Column(name = "um_email", nullable = false, unique = true, length = 150)
+	@Column(name = "um_email", nullable = false, length = 150)
 	private String email;
 
 	@NotBlank(message = "Password is Required")
-	@Size(min = 8, message = "Passowrd must be 8 characters")
+	@Size(min = 8, message = "Password must be 8 characters")
 	@Column(name = "um_password", nullable = false)
 	@JsonIgnore
 	private String password;
@@ -64,17 +71,16 @@ public class User {
 	@Column(name = "um_updated_at", nullable = false)
 	private LocalDateTime updatedAt;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "um_created_by")
-	@JsonIgnore
-	private User createdBy;
+	@Column(name = "um_created_by")
+	private Long createdById;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "um_updated_by")
-	@JsonIgnore
-	private User updatedBy;
+	@Column(name = "um_updated_by")
+	private Long updatedById;
 
 	@Column(name = "um_is_deleted", nullable = false)
 	private boolean isDeleted = false;
+
+	@Column(name = "um_deleted_timestamp")
+	private LocalDateTime deletedTimestamp;
 
 }

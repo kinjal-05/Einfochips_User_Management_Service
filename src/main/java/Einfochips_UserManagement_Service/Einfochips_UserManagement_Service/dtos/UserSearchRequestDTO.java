@@ -1,17 +1,14 @@
 package Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos;
 
+import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.enums.Role;
+
 import java.time.LocalDateTime;
 
-import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.enums.Role;
-import lombok.Builder;
-import lombok.Data;
-
-public record UserResponseDTO(
-		Long id,
+public record UserSearchRequestDTO(
 		String email,
 		Role role,
-		LocalDateTime createdAt,
-		LocalDateTime updatedAt,
 		Long createdById,
-		Long updatedById
+		Long updatedById,
+		LocalDateTime fromDate,
+		LocalDateTime toDate
 ) {}

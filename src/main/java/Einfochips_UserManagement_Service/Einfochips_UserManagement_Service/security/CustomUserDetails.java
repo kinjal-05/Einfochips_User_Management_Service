@@ -3,18 +3,21 @@ package Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.secu
 import java.util.Collection;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.models.User;
 
+@RequiredArgsConstructor
+@Getter
+@Setter
 public class CustomUserDetails implements UserDetails {
 	private final User user;
 
-	public CustomUserDetails(User user) {
-		this.user = user;
-	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

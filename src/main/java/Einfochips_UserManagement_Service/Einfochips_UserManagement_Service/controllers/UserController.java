@@ -1,10 +1,12 @@
 package Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.controllers;
 
+import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.DeleteResponseDTO;
-import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.LoginRequestDTO;
-import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.LoginResponseDTO;
-import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.UserRequestDTO;
-import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.UserResponseDTO;
-import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.UserUpdateRequestDTO;
 import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.enums.Role;
 import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.services.UserService;
 import jakarta.validation.Valid;
@@ -34,11 +30,12 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
 	private final UserService userService;
+	private final PasswordEncoder passwordEncoder;
 
 	@PostMapping("/registerUser")
-	@ResponseStatus(HttpStatus.CREATED)
-	public UserResponseDTO registerUser(@Valid @RequestBody UserRequestDTO request) {
-		return userService.registerUser(request);
+	public ResponseEntity<UserResponseDTO> registerUser(@RequestBody @Valid UserRequestDTO request) {
+			UserResponseDTO response = userService.registerUser(request);
+			return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@PostMapping("/login")
@@ -46,19 +43,12 @@ public class UserController {
 		return ResponseEntity.ok(userService.login(request));
 	}
 
-	@GetMapping("/search")
-	public Page<UserResponseDTO> searchUsers(@RequestParam(required = false) String email,
-			@RequestParam(required = false) String role, @RequestParam(required = false) Long createdBy,
-			@RequestParam(required = false) Long updatedBy, @RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-		Pageable pageable = PageRequest.of(page, size);
+	@PostMapping("/search")
+	public Page<UserResponseDTO> searchUsers(
+			@RequestBody UserSearchRequestDTO request,
+			Pageable pageable) {
 
-		Role roleEnum = role != null ? Role.valueOf(role) : null;
-
-		return userService.searchUsers(email, roleEnum, createdBy != null ? String.valueOf(createdBy) : null,
-				updatedBy != null ? String.valueOf(updatedBy) : null, null, null,
-
-				pageable);
+		return userService.searchUsers(request, pageable);
 	}
 
 	@PatchMapping("/updateUser/{id}")
@@ -79,4 +69,11 @@ public class UserController {
 		DeleteResponseDTO response = userService.softDeleteUser(id);
 		return ResponseEntity.ok(response);
 	}
+
+	@PatchMapping("/changePassword")
+	public ResponseEntity<ChangePasswordResponseDTO> changePassword(
+			@RequestBody @Valid ChangePasswordRequestDTO request) {
+		return ResponseEntity.ok(userService.changePassword(request));
+	}
+
 }
