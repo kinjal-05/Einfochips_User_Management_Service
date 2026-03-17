@@ -17,12 +17,6 @@ import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.excep
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	@ExceptionHandler(ResourceAlreadyExistsException.class)
-	public ResponseEntity<?> handleAlreadyExists(ResourceAlreadyExistsException ex) {
-		return ResponseEntity.status(HttpStatus.CONFLICT)
-				.body(Map.of("timestamp", LocalDateTime.now(), "status", 409, "error", ex.getMessage()));
-	}
-
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
 		Map<String, String> errors = new HashMap<>();
@@ -52,10 +46,19 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<String> handleDuplicateEmail(DataIntegrityViolationException ex) {
-
+	public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+		String message = "Duplicate entry: a record with this value already exists";
+		String cause = ex.getMostSpecificCause().getMessage();
+		if (cause != null && cause.contains("Duplicate entry")) {
+			message = "Duplicate value detected. Please use a unique value.";
+		}
+		Map<String, Object> error = new HashMap<>();
+		error.put("status", HttpStatus.CONFLICT.value());
+		error.put("error", "Conflict");
+		error.put("message", message);
+		error.put("timestamp", System.currentTimeMillis());
 		return ResponseEntity
 				.status(HttpStatus.CONFLICT)
-				.body("Email already exists");
+				.body(error);
 	}
 }

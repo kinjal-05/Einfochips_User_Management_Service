@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 public record LoginResponseDTO(
-		Long id,
+		long id,
 		String email,
 		Role role,
-		String token,       // ← add this
+		String token,
 		String message
 ) {}

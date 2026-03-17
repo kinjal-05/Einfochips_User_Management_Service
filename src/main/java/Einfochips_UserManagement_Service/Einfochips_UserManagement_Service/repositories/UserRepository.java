@@ -1,5 +1,6 @@
 package Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.repositories;
 
+import java.util.List;
 import java.util.Optional;
 
 import Einfochips_UserManagement_Service.Einfochips_UserManagement_Service.dtos.UserEmailRoleProjection;
@@ -19,5 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 	@Query("SELECT u.email AS email, u.role AS role FROM User u WHERE u.email = :email")
 	Optional<UserEmailRoleProjection> findEmailAndRoleByEmail(@Param("email") String email);
 
+	List<User> findByIsDeletedFalse();
 	boolean existsByEmail(String email);
 }

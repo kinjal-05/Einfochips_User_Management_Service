@@ -7,13 +7,13 @@ import lombok.Builder;
 import lombok.Data;
 
 public record DeleteResponseDTO(
-		Long id,
+		long id,
 		String email,
 		Role role,
 		LocalDateTime createdAt,
 		LocalDateTime updatedAt,
-		Long createdById,
-		Long updatedById,
+		long createdById,
+		long updatedById,
 		boolean isDeleted,
 		String message
 ) {}

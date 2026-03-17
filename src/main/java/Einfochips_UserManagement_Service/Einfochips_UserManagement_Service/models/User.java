@@ -46,7 +46,7 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "um_id", updatable = false, nullable = false)
 	@EqualsAndHashCode.Include
-	private Long id;
+	private long id;
 
 	@Email(message = "Invalid Email Format")
 	@NotBlank(message = "Email is Required")
@@ -72,10 +72,10 @@ public class User {
 	private LocalDateTime updatedAt;
 
 	@Column(name = "um_created_by")
-	private Long createdById;
+	private long createdById;
 
 	@Column(name = "um_updated_by")
-	private Long updatedById;
+	private long updatedById;
 
 	@Column(name = "um_is_deleted", nullable = false)
 	private boolean isDeleted = false;

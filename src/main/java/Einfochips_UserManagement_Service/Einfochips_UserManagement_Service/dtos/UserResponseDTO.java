@@ -7,11 +7,11 @@ import lombok.Builder;
 import lombok.Data;
 
 public record UserResponseDTO(
-		Long id,
+		long id,
 		String email,
 		Role role,
 		LocalDateTime createdAt,
 		LocalDateTime updatedAt,
-		Long createdById,
-		Long updatedById
+		long createdById,
+		long updatedById
 ) {}

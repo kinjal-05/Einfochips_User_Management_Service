@@ -126,7 +126,7 @@
 		}
 
 		@Override
-		public UserResponseDTO updateUser(Long id, UserUpdateRequestDTO request) {
+		public UserResponseDTO updateUser(long id, UserUpdateRequestDTO request) {
 
 			User user = userRepository.findById(id)
 					.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
@@ -164,11 +164,10 @@
 		}
 
 		@Override
-		public UserResponseDTO getUserById(Long id) {
+		public UserResponseDTO getUserById(long id) {
 
 			User user = userRepository.findById(id)
-					.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
+					.orElse(null);
 			return new UserResponseDTO(
 					user.getId(),
 					user.getEmail(),
@@ -181,7 +180,7 @@
 		}
 
 		@Override
-		public DeleteResponseDTO softDeleteUser(Long id) {
+		public DeleteResponseDTO softDeleteUser(long id) {
 
 			User user = userRepository.findById(id)
 					.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));

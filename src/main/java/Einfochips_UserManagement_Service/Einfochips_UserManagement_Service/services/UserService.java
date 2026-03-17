@@ -15,11 +15,11 @@ public interface UserService {
 
 	Page<UserResponseDTO> searchUsers(UserSearchRequestDTO request, Pageable pageable);
 
-	UserResponseDTO updateUser(Long id, UserUpdateRequestDTO request);
+	UserResponseDTO updateUser(long id, UserUpdateRequestDTO request);
 
-	UserResponseDTO getUserById(Long id);
+	UserResponseDTO getUserById(long id);
 
-	DeleteResponseDTO softDeleteUser(Long id);
+	DeleteResponseDTO softDeleteUser(long id);
 
 	ChangePasswordResponseDTO changePassword( ChangePasswordRequestDTO request);
 }

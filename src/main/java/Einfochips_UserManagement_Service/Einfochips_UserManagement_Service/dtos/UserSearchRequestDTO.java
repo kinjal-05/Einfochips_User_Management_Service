@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 public record UserSearchRequestDTO(
 		String email,
 		Role role,
-		Long createdById,
-		Long updatedById,
+		long createdById,
+		long updatedById,
 		LocalDateTime fromDate,
 		LocalDateTime toDate
 ) {}
