@@ -55,13 +55,10 @@
 				});
 			}
 
-			try {
+
 				User savedUser = userRepository.save(user);
 				return mapToUserResponseDTO(savedUser);
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw e;
-			}
+
 		}
 
 
