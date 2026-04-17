@@ -2,6 +2,7 @@
 
 	import java.time.LocalDateTime;
 
+	import org.springframework.context.annotation.Bean;
 	import userservice.dtos.*;
 	import userservice.security.CustomUserDetails;
 	import userservice.security.JwtService;
@@ -23,8 +24,9 @@
 	import userservice.services.UserService;
 	import lombok.RequiredArgsConstructor;
 
-	@Service
-	@RequiredArgsConstructor
+
+@Service
+@RequiredArgsConstructor
 	public class UserServiceImpl implements UserService {
 		private final UserRepository userRepository;
 		private final PasswordEncoder passwordEncoder;

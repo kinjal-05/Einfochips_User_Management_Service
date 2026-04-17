@@ -1,27 +1,26 @@
 package userservice.security;
 
-import java.util.Collection;
-import java.util.List;
-
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import userservice.models.User;
 
-@RequiredArgsConstructor
-@Getter
-@Setter
-public class CustomUserDetails implements UserDetails {
-	private final User user;
+import java.util.Collection;
+import java.util.List;
 
+public class CustomUserDetails implements UserDetails {
+
+	@Getter
+	private final User user;  // ← getUser() used by JwtService
+
+	public CustomUserDetails(User user) {
+		this.user = user;
+	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return List.of(new SimpleGrantedAuthority(user.getRole().name()));
+		return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
 	}
 
 	@Override
@@ -35,22 +34,16 @@ public class CustomUserDetails implements UserDetails {
 	}
 
 	@Override
-	public boolean isAccountNonExpired() {
-		return true;
-	}
+	public boolean isAccountNonExpired() { return true; }
 
 	@Override
-	public boolean isAccountNonLocked() {
-		return true;
-	}
+	public boolean isAccountNonLocked() { return true; }
 
 	@Override
-	public boolean isCredentialsNonExpired() {
-		return true;
-	}
+	public boolean isCredentialsNonExpired() { return true; }
 
 	@Override
 	public boolean isEnabled() {
-		return !user.isDeleted();
+		return !user.isDeleted();  // works now because field is named `deleted`
 	}
 }

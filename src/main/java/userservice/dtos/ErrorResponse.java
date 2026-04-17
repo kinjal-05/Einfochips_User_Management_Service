@@ -27,11 +27,13 @@ import java.time.LocalDateTime;
  * - @Builder → enables builder pattern for object creation
  * </p>
  */
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class ErrorResponse {
 
 	/**

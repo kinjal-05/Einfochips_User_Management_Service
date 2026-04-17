@@ -6,6 +6,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,6 +29,7 @@ import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
 import userservice.security.JwtService;
 import userservice.servicesImpl.UserServiceImpl;
+
 
 import java.util.List;
 import java.util.Optional;
