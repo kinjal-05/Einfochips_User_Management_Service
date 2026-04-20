@@ -55,8 +55,6 @@ public interface UserRepository extends JpaRepository<User, Long>,
 	@Query("SELECT u.email AS email, u.role AS role FROM User u WHERE u.email = :email AND u.isDeleted = false")
 	Optional<UserEmailRoleProjection> findEmailAndRoleByEmail(@Param("email") String email);
 
-	// All active users
-	List<User> findByIsDeletedFalse();
 
 	// Email exists check — active users only
 	@Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.isDeleted = false")
