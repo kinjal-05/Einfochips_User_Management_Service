@@ -1,6 +1,9 @@
 package userservice.controllers;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import userservice.dtos.*;
+import userservice.enums.Role;
 import userservice.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 /**
  * REST Controller for User-related operations.
@@ -30,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
 	// Service layer dependency (business logic)
@@ -49,14 +55,14 @@ public class UserController {
 	 * - 400 BAD REQUEST if validation fails
 	 */
 	@PostMapping("/registerUser")
-	public ResponseEntity<UserResponseDTO> registerUser(
+	public ResponseEntity<ApiResponse<UserResponseDTO>> createUser(
 			@RequestBody @Valid UserRequestDTO request) {
 
-		UserResponseDTO response = userService.registerUser(request);
+		UserResponseDTO response = userService.createUser(request);
 
 		return ResponseEntity
 				.status(HttpStatus.CREATED)
-				.body(response);
+				.body(ApiResponse.success(response, "User created successfully"));
 	}
 
 	/**
@@ -75,10 +81,15 @@ public class UserController {
 	 * - 401 UNAUTHORIZED (invalid credentials)
 	 */
 	@PostMapping("/login")
-	public ResponseEntity<LoginResponseDTO> login(
+	public ResponseEntity<ApiResponse<LoginResponseDTO>> login(
 			@Valid @RequestBody LoginRequestDTO request) {
 
-		return ResponseEntity.ok(userService.login(request));
+		log.info("{}","Enter in Login Controller");
+		LoginResponseDTO response = userService.login(request);
+
+		return ResponseEntity
+				.status(HttpStatus.OK)
+				.body(ApiResponse.success(response, "Login successful"));
 	}
 
 	/**
@@ -92,17 +103,36 @@ public class UserController {
 	 * - date range
 	 * </p>
 	 *
-	 * @param request   Filter criteria
-	 * @param pageable  Pagination and sorting information
+
 	 *
 	 * @return Paginated list of users
 	 */
-	@PostMapping("/search")
-	public Page<UserResponseDTO> searchUsers(
-			@RequestBody UserSearchRequestDTO request,
+	@GetMapping("/search")
+	public ResponseEntity<ApiResponse<Page<UserResponseDTO>>> searchUsers(
+			@RequestParam(required = false) String email,
+			@RequestParam(required = false) Role role,
+			@RequestParam(required = false) Long createdById,
+			@RequestParam(required = false) Long updatedById,
+			@RequestParam(required = false)
+			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+			LocalDateTime fromDate,
+			@RequestParam(required = false)
+			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+			LocalDateTime toDate,
 			Pageable pageable) {
 
-		return userService.searchUsers(request, pageable);
+		log.info("Enter in Controller Part");
+		log.info("Params: email={}, role={}, createdById={}, updatedById={}",
+				email, role, createdById, updatedById);
+		UserSearchRequestDTO request = new UserSearchRequestDTO(
+				email, role, createdById, updatedById, fromDate, toDate
+		);
+		log.info("{}",request);
+		Page<UserResponseDTO> response = userService.searchUsers(request, pageable);
+
+		return ResponseEntity
+				.status(HttpStatus.OK)
+				.body(ApiResponse.success(response, "Users fetched successfully"));
 	}
 
 	/**
@@ -118,13 +148,15 @@ public class UserController {
 	 * - 404 NOT FOUND if user does not exist
 	 */
 	@PatchMapping("/updateUser/{id}")
-	public ResponseEntity<UserResponseDTO> updateUser(
+	public ResponseEntity<ApiResponse<UserResponseDTO>> updateUser(
 			@PathVariable Long id,
 			@RequestBody UserUpdateRequestDTO request) {
 
 		UserResponseDTO updatedUser = userService.updateUser(id, request);
 
-		return ResponseEntity.ok(updatedUser);
+		return ResponseEntity
+				.status(HttpStatus.OK)
+				.body(ApiResponse.success(updatedUser, "User updated successfully"));
 	}
 
 	/**
@@ -138,11 +170,14 @@ public class UserController {
 	 * - 404 NOT FOUND if user not found
 	 */
 	@GetMapping("/getById/{id}")
-	public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<UserResponseDTO>> getUserById(
+			@PathVariable Long id) {
 
 		UserResponseDTO user = userService.getUserById(id);
 
-		return ResponseEntity.ok(user);
+		return ResponseEntity
+				.status(HttpStatus.OK)
+				.body(ApiResponse.success(user, "User fetched successfully"));
 	}
 
 	/**
@@ -161,11 +196,13 @@ public class UserController {
 	 * - 404 NOT FOUND if user does not exist
 	 */
 	@DeleteMapping("/deleteUser/{id}")
-	public ResponseEntity<DeleteResponseDTO> softDeleteUser(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<Void>> softDeleteUser(@PathVariable long id) {
 
-		DeleteResponseDTO response = userService.softDeleteUser(id);
+		userService.softDeleteUser(id);
 
-		return ResponseEntity.ok(response);
+		return ResponseEntity
+				.status(HttpStatus.OK)
+				.body(ApiResponse.success(null, "User deleted successfully"));
 	}
 
 	/**
@@ -186,9 +223,13 @@ public class UserController {
 	 * - 401 UNAUTHORIZED (wrong old password)
 	 */
 	@PatchMapping("/changePassword")
-	public ResponseEntity<ChangePasswordResponseDTO> changePassword(
-			@RequestBody @Valid ChangePasswordRequestDTO request) {
+	public ResponseEntity<ApiResponse<Void>> changePassword(
+			@Valid @RequestBody ChangePasswordRequestDTO request) {
 
-		return ResponseEntity.ok(userService.changePassword(request));
+		userService.changePassword(request);
+
+		return ResponseEntity
+				.status(HttpStatus.OK)
+				.body(ApiResponse.success(null, "Password changed successfully"));
 	}
 }

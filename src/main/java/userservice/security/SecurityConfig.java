@@ -42,34 +42,26 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
 		http
 				.csrf(csrf -> csrf.disable())
-				.httpBasic(basic -> basic.disable()) // Disable basic auth since we use JWT
+				.httpBasic(basic -> basic.disable())
 				.authenticationProvider(authenticationProvider())
-				.authorizeHttpRequests(auth -> auth
-						// Public endpoints
-						.requestMatchers(
-								"/api/v1/users/login/**",
-								"/api/v1/users/encode/**",
-								"/v3/api-docs/**",        // OpenAPI JSON
-								"/swagger-ui/**",         // Swagger UI
-								"/swagger-ui.html",       // Swagger UI fallback
-								"/swagger-resources/**",  // Swagger resources
-								"/webjars/**"             // Swagger static resources
-						).permitAll()
-						// Protected endpoints
-						.requestMatchers(
-								"/api/v1/users/registerUser/**",
-								"/api/v1/users/search/**",
-								"/api/v1/users/updateUser/**",
-								"/api/v1/users/getById/**",
-								"/api/v1/users/deleteUser/**",
-								"/api/v1/users/changePassword/**"
-						).authenticated()
-						.anyRequest().authenticated()
-				)
 				.sessionManagement(session -> session
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+				)
+				.authorizeHttpRequests(auth -> auth
+						// ✅ Public endpoints
+						.requestMatchers(
+								"/api/v1/users/login",
+								"/api/v1/users/register",
+								"/v3/api-docs/**",
+								"/swagger-ui/**",
+								"/swagger-ui.html"
+						).permitAll()
+
+						// ✅ Everything else secured
+						.anyRequest().authenticated()
 				)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

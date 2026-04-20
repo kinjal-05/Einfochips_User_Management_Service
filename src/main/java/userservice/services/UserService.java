@@ -36,7 +36,7 @@ public interface UserService {
 	 * @param request User registration request DTO
 	 * @return Created user response DTO
 	 */
-	UserResponseDTO registerUser(UserRequestDTO request);
+	UserResponseDTO createUser(UserRequestDTO request);
 
 	/**
 	 * Authenticate user (login).
@@ -112,7 +112,7 @@ public interface UserService {
 	 * @param id User ID
 	 * @return Deletion response DTO
 	 */
-	DeleteResponseDTO softDeleteUser(long id);
+	void softDeleteUser(long id);
 
 	/**
 	 * Change user password.
@@ -127,5 +127,5 @@ public interface UserService {
 	 * @param request Password change request DTO
 	 * @return Password change response DTO
 	 */
-	ChangePasswordResponseDTO changePassword(ChangePasswordRequestDTO request);
+	void changePassword(ChangePasswordRequestDTO request);
 }
