@@ -35,6 +35,8 @@ import jakarta.validation.constraints.Size;
 @EntityListeners(AuditingEntityListener.class)
 @SQLDelete(sql="UPDATE users SET um_is_deleted = true, um_deleted_timestamp = CURRENT_TIMESTAMP WHERE um_id = ?")
 @Builder
+@DynamicUpdate
+@DynamicInsert
 public class User {
 
 	@Id

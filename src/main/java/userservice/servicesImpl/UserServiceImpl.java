@@ -1,7 +1,8 @@
 	package userservice.servicesImpl;
 	import java.time.LocalDateTime;
-
 	import lombok.extern.slf4j.Slf4j;
+	import org.springframework.transaction.annotation.Isolation;
+	import org.springframework.transaction.annotation.Transactional;
 	import userservice.dtos.*;
 	import userservice.security.CustomUserDetails;
 	import userservice.security.JwtService;
@@ -25,6 +26,7 @@
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 	public class UserServiceImpl implements UserService {
 
 		private final UserRepository userRepository;
@@ -33,6 +35,7 @@
 		private final JwtService jwtService;
 
 		@Override
+		@Transactional(readOnly = true)
 		public UserResponseDTO createUser(UserRequestDTO request) {
 			String defaultPassword = "Temp@12345";
 			User user = User.builder()
@@ -68,6 +71,7 @@
 		}
 
 		@Override
+		@Transactional(readOnly = true)
 		public Page<UserResponseDTO> searchUsers(UserSearchRequestDTO request, Pageable pageable) {
 			Specification<User> specification = UserSpecification.filterUsers(
 					request.email(),
@@ -82,6 +86,10 @@
 		}
 
 		@Override
+		@Transactional(
+				isolation = Isolation.READ_COMMITTED,
+				timeout = 10
+		)
 		public UserResponseDTO updateUser(long id, UserUpdateRequestDTO request) {
 			User user = getUserOrThrow(id);
 			User updatedUser = userRepository.save(user);
@@ -89,18 +97,21 @@
 		}
 
 		@Override
+		@Transactional(readOnly = true)
 		public UserResponseDTO getUserById(long id) {
 			User user = getUserOrThrow(id);
 			return mapToUserResponseDTO(user);
 		}
 
 		@Override
+		@Transactional
 		public void softDeleteUser(long id) {
 			User user = getUserOrThrow(id);
 			userRepository.delete(user);
 		}
 
 		@Override
+		@Transactional(rollbackFor = Exception.class)
 		public void changePassword(ChangePasswordRequestDTO request) {
 			String loggedInEmail = getCurrentUserEmail();
 			User user = userRepository.findByEmail(loggedInEmail)

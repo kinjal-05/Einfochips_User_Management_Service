@@ -36,29 +36,29 @@ public interface UserRepository extends JpaRepository<User, Long>,
 	 * Without @Where, this JPQL finds ALL users including deleted ones.
 	 */
 
-	// ✅ For authentication — finds user by email WITHOUT isDeleted filter
+	// For authentication — finds user by email WITHOUT isDeleted filter
 	// Used ONLY by CustomUserDetailsService
 	// Deleted users found here are rejected by CustomUserDetails.isEnabled() = false
 	@Query("SELECT u FROM User u WHERE u.email = :email")
 	Optional<User> findByEmail(@Param("email") String email);
 
-	// ✅ For business logic — finds ONLY active (non-deleted) users
+	// For business logic — finds ONLY active (non-deleted) users
 	// Use this in UserServiceImpl for all non-auth operations
 	@Query("SELECT u FROM User u WHERE u.email = :email AND u.isDeleted = false")
 	Optional<User> findActiveByEmail(@Param("email") String email);
 
-	// ✅ Find active user by ID
+	// Find active user by ID
 	@Query("SELECT u FROM User u WHERE u.id = :id AND u.isDeleted = false")
 	Optional<User> findActiveById(@Param("id") long id);
 
-	// ✅ Projection query
+	//  Projection query
 	@Query("SELECT u.email AS email, u.role AS role FROM User u WHERE u.email = :email AND u.isDeleted = false")
 	Optional<UserEmailRoleProjection> findEmailAndRoleByEmail(@Param("email") String email);
 
-	// ✅ All active users
+	// All active users
 	List<User> findByIsDeletedFalse();
 
-	// ✅ Email exists check — active users only
+	// Email exists check — active users only
 	@Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.isDeleted = false")
 	boolean existsByEmail(@Param("email") String email);
 }
