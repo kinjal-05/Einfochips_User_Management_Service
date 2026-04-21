@@ -2,10 +2,15 @@ package userservice.services;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.internal.verification.NoMoreInteractions;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import userservice.dtos.*;
 import userservice.enums.Role;
 import userservice.exceptions.ResourceNotFoundException;
@@ -34,8 +40,10 @@ import userservice.servicesImpl.UserServiceImpl;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 /**
@@ -52,530 +60,253 @@ import static org.mockito.Mockito.*;
  * Uses Mockito for mocking dependencies.
  */
 @ExtendWith(MockitoExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@DisplayName("UserService - Complete Test Suite")
+@DisplayName("UserServiceImpl - createUser()")
+@ActiveProfiles("test")
 class UserServiceTest {
 
 	// Mocked dependencies
 	@Mock private UserRepository userRepository;
 	@Mock private PasswordEncoder passwordEncoder;
-	@Mock private AuthenticationManager authenticationManager;
-	@Mock private JwtService jwtService;
 
 	// Service under test
 	@InjectMocks private UserServiceImpl userService;
 
 	// Constants used in tests
 	private static final String DEFAULT_PASSWORD  = "Temp@12345";
-	private static final String ENCODED_PASSWORD  = "encodedPassword";
-	private static final String ADMIN_EMAIL       = "admin@example.com";
-	private static final String USER_EMAIL        = "test@example.com";
-	private static final String LOGIN_PASSWORD    = "password123";
-	private static final String JWT_TOKEN         = "mocked-jwt-token";
-
-	private static final Long ADMIN_ID = 1L;
-	private static final Long USER_ID  = 2L;
+	private static final String ENCODED_PASSWORD  = "$2a$10$encodedHashHere";
+	private static final String TEST_EMAIL="kinjal@gmail.com";
+	private static final long SAVED_USER_ID=1;
+	private static final Role TEST_ROLE=Role.ROLE_USER;
 
 	// Test data
 	private UserRequestDTO userRequest;
-	private User adminUser;
 	private User savedUser;
-	private LoginRequestDTO loginRequest;
-	private CustomUserDetails customUserDetails;
+
 
 	/**
 	 * Initialize common objects before each test.
 	 */
 	@BeforeEach
 	void setUp() {
-		userRequest  = new UserRequestDTO(USER_EMAIL, Role.ROLE_USER);
-		adminUser    = buildUser(ADMIN_ID, ADMIN_EMAIL, Role.ROLE_ADMIN);
-		savedUser    = buildUser(USER_ID, USER_EMAIL, Role.ROLE_USER);
-
-		// Set audit fields
-		savedUser.setCreatedById(ADMIN_ID);
-		savedUser.setUpdatedById(ADMIN_ID);
-
-		loginRequest      = new LoginRequestDTO(USER_EMAIL, LOGIN_PASSWORD);
-		customUserDetails = new CustomUserDetails(savedUser);
+		userRequest=new UserRequestDTO(TEST_EMAIL,TEST_ROLE);
+		savedUser=User.builder().id(SAVED_USER_ID).email(TEST_EMAIL).password(ENCODED_PASSWORD).role(TEST_ROLE).isDeleted(false).build();
 	}
 
-	/**
-	 * Clear security context after each test to prevent test bleed.
-	 */
-	@AfterEach
-	void tearDown() {
-		SecurityContextHolder.clearContext();
-	}
-
-	/**
-	 * Helper to build a User entity with id, email, and role.
-	 */
-	private User buildUser(Long id, String email, Role role) {
-		User user = new User();
-		user.setId(id);
-		user.setEmail(email);
-		user.setRole(role);
-		user.setDeleted(false);
-		return user;
-	}
-
-	/**
-	 * Helper to mock an authenticated admin in security context.
-	 */
-	private void mockAdminAuth() {
-		UsernamePasswordAuthenticationToken auth =
-				new UsernamePasswordAuthenticationToken(
-						ADMIN_EMAIL,
-						null,
-						List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
-				);
-		SecurityContextHolder.getContext().setAuthentication(auth);
-	}
-
-	/**
-	 * Helper to mock password encoding.
-	 */
-	private void mockPasswordEncoder() {
-		when(passwordEncoder.encode(DEFAULT_PASSWORD)).thenReturn(ENCODED_PASSWORD);
-	}
-
-	/**
-	 * Helper to build authentication object for a user.
-	 */
-	private Authentication buildAuthentication(CustomUserDetails details) {
-		return new UsernamePasswordAuthenticationToken(
-				details, null, details.getAuthorities()
-		);
-	}
-
-	// =========================
-	// ====== REGISTRATION =====
-	// =========================
-
-	@Test
-	@Order(1)
-	@DisplayName("Register - success with admin auth sets createdById")
-	void registerUser_success() {
-		mockAdminAuth();
-		mockPasswordEncoder();
-
-		when(userRepository.findByEmail(ADMIN_EMAIL)).thenReturn(Optional.of(adminUser));
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		UserResponseDTO response = userService.registerUser(userRequest);
-
-		assertNotNull(response);
-		assertEquals(USER_EMAIL, response.email());
-		assertEquals(USER_ID, response.id());
-
-		verify(passwordEncoder).encode(DEFAULT_PASSWORD);
-		verify(userRepository).findByEmail(ADMIN_EMAIL);
-		verify(userRepository).save(any(User.class));
-	}
-
-	@Test
-	@Order(2)
-	@DisplayName("Register - no auth context skips createdById lookup")
-	void registerUser_noAuth() {
-		mockPasswordEncoder();
-		when(userRepository.save(any())).thenReturn(savedUser);
-
-		userService.registerUser(userRequest);
-
-		verify(userRepository, never()).findByEmail(anyString());
-		verify(userRepository).save(any());
-	}
-
-	@Test
-	@Order(3)
-	@DisplayName("Register - duplicate email throws DataIntegrityViolationException")
-	void registerUser_duplicateEmail() {
-		mockPasswordEncoder();
-		when(userRepository.save(any()))
-				.thenThrow(new DataIntegrityViolationException("Duplicate entry"));
-
-		assertThrows(DataIntegrityViolationException.class,
-				() -> userService.registerUser(userRequest));
-	}
-
-	@Test
-	@Order(4)
-	@DisplayName("Register - password is encoded before saving")
-	void registerUser_shouldEncodePassword() {
-		mockPasswordEncoder();
-		when(userRepository.save(any())).thenReturn(savedUser);
-
-		userService.registerUser(userRequest);
-
-		verify(passwordEncoder).encode(DEFAULT_PASSWORD);
-	}
-
-	@Test
-	@Order(5)
-	@DisplayName("Register - response DTO fields are correctly mapped")
-	void registerUser_mapping() {
-		mockPasswordEncoder();
-		when(userRepository.save(any())).thenReturn(savedUser);
-
-		UserResponseDTO response = userService.registerUser(userRequest);
-
-		assertAll(
-				() -> assertNotNull(response),
-				() -> assertEquals(USER_ID,        response.id()),
-				() -> assertEquals(USER_EMAIL,     response.email()),
-				() -> assertEquals(Role.ROLE_USER, response.role())
-		);
-	}
-
-	// =========================
-	// ======== LOGIN ==========
-	// =========================
-
-	@Test
-	@Order(6)
-	@DisplayName("Login - success returns JWT token and user details")
-	void login_success() {
-		Authentication auth = buildAuthentication(customUserDetails);
-
-		when(authenticationManager.authenticate(any())).thenReturn(auth);
-		when(jwtService.generateToken(customUserDetails)).thenReturn(JWT_TOKEN);
-
-		LoginResponseDTO response = userService.login(loginRequest);
-
-		assertNotNull(response);
-		assertEquals(USER_EMAIL,         response.email());
-		assertEquals(JWT_TOKEN,          response.token());
-		assertEquals("Login Successful", response.message());
-
-		verify(authenticationManager, times(1)).authenticate(any());
-		verify(jwtService,            times(1)).generateToken(customUserDetails);
-	}
-
-	@Test
-	@Order(7)
-	@DisplayName("Login - bad credentials throws exception and skips token generation")
-	void login_invalidCredentials() {
-		when(authenticationManager.authenticate(any()))
-				.thenThrow(new RuntimeException("Bad credentials"));
-
-		RuntimeException ex = assertThrows(RuntimeException.class,
-				() -> userService.login(loginRequest));
-
-		assertTrue(ex.getMessage().contains("Bad credentials"));
-		verify(jwtService, never()).generateToken(any());
-	}
-
-	@Test
-	@Order(8)
-	@DisplayName("Login - jwtService.generateToken is called with correct details")
-	void login_shouldCallJwtService() {
-		Authentication auth = buildAuthentication(customUserDetails);
-
-		when(authenticationManager.authenticate(any())).thenReturn(auth);
-		when(jwtService.generateToken(customUserDetails)).thenReturn(JWT_TOKEN);
-
-		userService.login(loginRequest);
-
-		verify(jwtService).generateToken(customUserDetails);
-	}
-
-	@Test
-	@Order(9)
-	@DisplayName("Login - response contains correct id, email, role and token")
-	void login_responseDataValidation() {
-		Authentication auth = buildAuthentication(customUserDetails);
-
-		when(authenticationManager.authenticate(any())).thenReturn(auth);
-		when(jwtService.generateToken(customUserDetails)).thenReturn(JWT_TOKEN);
-
-		LoginResponseDTO response = userService.login(loginRequest);
-
-		assertAll("Response validation",
-				() -> assertEquals(savedUser.getId(),    response.id()),
-				() -> assertEquals(savedUser.getEmail(), response.email()),
-				() -> assertEquals(savedUser.getRole(),  response.role()),
-				() -> assertEquals(JWT_TOKEN,            response.token())
-		);
-	}
-
-	// =========================
-	// ======== UPDATE =========
-	// =========================
-
-	@Test
-	@Order(10)
-	@DisplayName("Update - success with admin auth updates email and role")
-	void updateUser_success() {
-		UserUpdateRequestDTO updateRequest =
-				new UserUpdateRequestDTO("updated@example.com", Role.ROLE_ADMIN);
-
-		mockAdminAuth();
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(savedUser));
-		when(userRepository.findByEmail(ADMIN_EMAIL)).thenReturn(Optional.of(adminUser));
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		UserResponseDTO response = userService.updateUser(USER_ID, updateRequest);
-
-		assertNotNull(response);
-		assertEquals("updated@example.com", response.email());
-		assertEquals(Role.ROLE_ADMIN,       response.role());
-
-		verify(userRepository).findById(USER_ID);
-		verify(userRepository).findByEmail(ADMIN_EMAIL);
-		verify(userRepository).save(any(User.class));
-	}
-
-	@Test
-	@Order(11)
-	@DisplayName("Update - user not found throws ResourceNotFoundException")
-	void updateUser_notFound() {
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
-
-		UserUpdateRequestDTO updateRequest =
-				new UserUpdateRequestDTO("test@test.com", Role.ROLE_USER);
-
-		assertThrows(ResourceNotFoundException.class,
-				() -> userService.updateUser(USER_ID, updateRequest));
-
-		verify(userRepository).findById(USER_ID);
-		verify(userRepository, never()).save(any());
-	}
-
-	@Test
-	@Order(12)
-	@DisplayName("Update - no auth context skips updatedById lookup")
-	void updateUser_noAuth() {
-		UserUpdateRequestDTO updateRequest =
-				new UserUpdateRequestDTO("test@test.com", Role.ROLE_USER);
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(savedUser));
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		userService.updateUser(USER_ID, updateRequest);
-
-		verify(userRepository, never()).findByEmail(anyString());
-		verify(userRepository).save(any(User.class));
-	}
-
-	@Test
-	@Order(13)
-	@DisplayName("Update - null role preserves existing role")
-	void updateUser_onlyEmail() {
-		UserUpdateRequestDTO updateRequest =
-				new UserUpdateRequestDTO("new@email.com", null);
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(savedUser));
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		UserResponseDTO response = userService.updateUser(USER_ID, updateRequest);
-
-		assertEquals("new@email.com",    response.email());
-		assertEquals(savedUser.getRole(), response.role());
-	}
-
-	// =========================
-	// ======= SOFT DELETE =====
-	// =========================
-
-	@Test
-	@Order(14)
-	@DisplayName("SoftDelete - success marks user as deleted and saves")
-	void softDeleteUser_success() {
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(savedUser));
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		userService.softDeleteUser(USER_ID);
-
-		assertTrue(savedUser.isDeleted());
-		verify(userRepository).findById(USER_ID);
-		verify(userRepository).save(savedUser);
-	}
-
-	@Test
-	@Order(15)
-	@DisplayName("SoftDelete - user not found throws ResourceNotFoundException")
-	void softDeleteUser_notFound() {
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
-
-		assertThrows(ResourceNotFoundException.class,
-				() -> userService.softDeleteUser(USER_ID));
-
-		verify(userRepository).findById(USER_ID);
-		verify(userRepository, never()).save(any());
-	}
-
-	@Test
-	@Order(16)
-	@DisplayName("SoftDelete - saved entity has deleted=true via ArgumentCaptor")
-	void softDeleteUser_shouldSetDeletedTrue() {
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(savedUser));
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		userService.softDeleteUser(USER_ID);
-
-		ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-		verify(userRepository).save(captor.capture());
-
-		assertTrue(captor.getValue().isDeleted());
-	}
-
-	// =========================
-	// ===== CHANGE PASSWORD ===
-	// =========================
-
-	@Test
-	@Order(17)
-	@DisplayName("ChangePassword - success returns correct response DTO")
-	void changePassword_success() {
-		mockAdminAuth();
-
-		ChangePasswordRequestDTO changeRequest =
-				new ChangePasswordRequestDTO("oldPass", "newPass");
-
-		savedUser.setPassword("encodedOldPass");
-
-		when(userRepository.findByEmail(ADMIN_EMAIL)).thenReturn(Optional.of(savedUser));
-		when(passwordEncoder.matches("oldPass", "encodedOldPass")).thenReturn(true);
-		when(passwordEncoder.encode("newPass")).thenReturn("encodedNewPass");
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		ChangePasswordResponseDTO response = userService.changePassword(changeRequest);
-
-		assertNotNull(response);
-		assertEquals(USER_ID,                    response.userId());
-		assertEquals(USER_EMAIL,                 response.email());
-		assertEquals("Password changed successfully", response.message());
-
-		verify(passwordEncoder).matches("oldPass", "encodedOldPass");
-		verify(passwordEncoder).encode("newPass");
-		verify(userRepository).save(any(User.class));
-	}
-
-	@Test
-	@Order(18)
-	@DisplayName("ChangePassword - user not found throws ResourceNotFoundException")
-	void changePassword_userNotFound() {
-		mockAdminAuth();
-
-		ChangePasswordRequestDTO changeRequest =
-				new ChangePasswordRequestDTO("oldPass", "newPass");
-
-		when(userRepository.findByEmail(ADMIN_EMAIL)).thenReturn(Optional.empty());
-
-		assertThrows(ResourceNotFoundException.class,
-				() -> userService.changePassword(changeRequest));
-
-		verify(userRepository).findByEmail(ADMIN_EMAIL);
-		verify(userRepository, never()).save(any());
-	}
-
-	@Test
-	@Order(19)
-	@DisplayName("ChangePassword - wrong old password throws BadCredentialsException")
-	void changePassword_wrongOldPassword() {
-		mockAdminAuth();
-
-		ChangePasswordRequestDTO changeRequest =
-				new ChangePasswordRequestDTO("wrongOld", "newPass");
-
-		savedUser.setPassword("encodedOldPass");
-
-		when(userRepository.findByEmail(ADMIN_EMAIL)).thenReturn(Optional.of(savedUser));
-		when(passwordEncoder.matches("wrongOld", "encodedOldPass")).thenReturn(false);
-
-		assertThrows(BadCredentialsException.class,
-				() -> userService.changePassword(changeRequest));
-
-		verify(passwordEncoder).matches("wrongOld", "encodedOldPass");
-		verify(userRepository, never()).save(any());
-	}
-
-	@Test
-	@Order(20)
-	@DisplayName("ChangePassword - saved entity has new encoded password and correct updatedById")
-	void changePassword_shouldUpdatePasswordAndAuditField() {
-		mockAdminAuth();
-
-		ChangePasswordRequestDTO changeRequest =
-				new ChangePasswordRequestDTO("oldPass", "newPass");
-
-		savedUser.setPassword("encodedOldPass");
-
-		when(userRepository.findByEmail(ADMIN_EMAIL)).thenReturn(Optional.of(savedUser));
-		when(passwordEncoder.matches("oldPass", "encodedOldPass")).thenReturn(true);
-		when(passwordEncoder.encode("newPass")).thenReturn("encodedNewPass");
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-		userService.changePassword(changeRequest);
-
-		ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-		verify(userRepository).save(captor.capture());
-
-		User captured = captor.getValue();
-		assertEquals("encodedNewPass", captured.getPassword());
-		assertEquals(savedUser.getId(), captured.getUpdatedById());
-	}
-
-	// =========================
-	// ======== SEARCH =========
-	// =========================
-
-	@Test
-	@Order(21)
-	@DisplayName("Search - returns matching page of users")
-	void searchUsers_success() {
-		Pageable pageable = PageRequest.of(0, 10);
-
-		UserSearchRequestDTO searchRequest =
-				new UserSearchRequestDTO(USER_EMAIL, Role.ROLE_USER, ADMIN_ID, ADMIN_ID, null, null);
-
-		when(userRepository.findAll(any(Specification.class), eq(pageable)))
-				.thenReturn(new PageImpl<>(List.of(savedUser)));
-
-		Page<UserResponseDTO> result = userService.searchUsers(searchRequest, pageable);
-
-		assertNotNull(result);
-		assertEquals(1, result.getContent().size());
-		verify(userRepository).findAll(any(Specification.class), eq(pageable));
-	}
-
-	@Test
-	@Order(22)
-	@DisplayName("Search - empty result throws ResourceNotFoundException")
-	void searchUsers_noData() {
-		Pageable pageable = PageRequest.of(0, 10);
-
-		UserSearchRequestDTO searchRequest =
-				new UserSearchRequestDTO(null, null, 0L, 0L, null, null);
-
-		when(userRepository.findAll(any(Specification.class), eq(pageable)))
-				.thenReturn(Page.empty());
-
-		assertThrows(ResourceNotFoundException.class,
-				() -> userService.searchUsers(searchRequest, pageable));
-	}
-
-	@Test
-	@Order(23)
-	@DisplayName("Search - response DTO fields are correctly mapped from User entity")
-	void searchUsers_mapping() {
-		Pageable pageable = PageRequest.of(0, 10);
-
-		UserSearchRequestDTO searchRequest =
-				new UserSearchRequestDTO(null, null, 0L, 0L, null, null);
-
-		when(userRepository.findAll(any(Specification.class), eq(pageable)))
-				.thenReturn(new PageImpl<>(List.of(savedUser)));
-
-		Page<UserResponseDTO> result = userService.searchUsers(searchRequest, pageable);
-		UserResponseDTO dto = result.getContent().get(0);
-
-		assertAll(
-				() -> assertEquals(savedUser.getId(),    dto.id()),
-				() -> assertEquals(savedUser.getEmail(), dto.email()),
-				() -> assertEquals(savedUser.getRole(),  dto.role())
-		);
-	}
+//	Test Cases For Create User API
+	@Nested
+	@DisplayName("Create User API Testing")
+	class CreateUser{
+			@Test
+			@Order(1)
+			@DisplayName("Should create User and return DTO")
+			void createUser_returnUserResponseDTO()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				UserResponseDTO responseDTO=userService.createUser(userRequest);
+				assertThat(responseDTO).isNotNull();
+				assertThat(responseDTO.id()).isEqualTo(SAVED_USER_ID);
+				assertThat(responseDTO.email()).isEqualTo(TEST_EMAIL);
+				assertThat(responseDTO.role()).isEqualTo(TEST_ROLE);
+			}
+
+			@Test
+			@Order(2)
+			@DisplayName("Should always encode hard password")
+			void createUser_AlwaysEncodePassword()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				verify(passwordEncoder,times(1)).encode(DEFAULT_PASSWORD);
+				verifyNoMoreInteractions(passwordEncoder);
+			}
+
+			@Test
+			@Order(3)
+			@DisplayName("Should save user with isDeleted false")
+			void createUser_SetIsDeletedFalse()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
+				verify(userRepository).save(argumentCaptor.capture());
+				assertThat(argumentCaptor.getValue().isDeleted()).isFalse();
+			}
+
+			@Test
+			@Order(4)
+			@DisplayName("Should save user with encoded password")
+			void createUser_SavedEncodedPassword()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
+				verify(userRepository).save(argumentCaptor.capture());
+				assertThat(argumentCaptor.getValue().getPassword()).isEqualTo(ENCODED_PASSWORD).isNotEqualTo(DEFAULT_PASSWORD);
+			}
+
+			@Test
+			@Order(5)
+			@DisplayName("Should save user with exact email from request")
+			void createUser_SavedWithExactEmail()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
+				verify(userRepository).save(argumentCaptor.capture());
+				assertThat(argumentCaptor.getValue().getEmail()).isEqualTo(TEST_EMAIL);
+			}
+
+			@Test
+			@Order(6)
+			@DisplayName("Should save user with exact role")
+			void createUser_SavedWithExactRole()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
+				verify(userRepository).save(argumentCaptor.capture());
+				assertThat(argumentCaptor.getValue().getRole()).isEqualTo(TEST_ROLE);
+			}
+
+			@Test
+			@Order(7)
+			@DisplayName("Should always call password encoder once")
+			void createUser_CallPasswordEncoderOnlyOnce()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				verify(passwordEncoder,times(1)).encode(DEFAULT_PASSWORD);
+			}
+
+			@Test
+			@Order(8)
+			@DisplayName("Should call user repository.save() only once")
+			void createUser_CallUserRepoOnlyOnce()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				verify(userRepository,times(1)).save(any(User.class));
+			}
+
+			@Test
+			@Order(9)
+			@DisplayName("Should not call any other repo method")
+			void createUser_NotCallAnyOtherMethod()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				verify(userRepository,times(1)).save(any(User.class));
+				verifyNoMoreInteractions(userRepository);
+			}
+
+			@Order(10)
+			@DisplayName("Should work for every enum type role")
+			@ParameterizedTest(name = "role={0}")
+			@EnumSource(Role.class)
+			void createUser_WorkForEveryEnumRole(Role role)
+			{
+					UserRequestDTO userRequestDTO=new UserRequestDTO(TEST_EMAIL,role);
+					User savedUser=User.builder().id(SAVED_USER_ID).email(TEST_EMAIL).password(ENCODED_PASSWORD).role(role).isDeleted(false).build();
+					given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+					given(userRepository.save(any(User.class))).willReturn(savedUser);
+					UserResponseDTO userResponseDTO= userService.createUser(userRequestDTO);
+					assertThat(userResponseDTO.role()).isEqualTo(role);
+					ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
+					verify(userRepository).save(argumentCaptor.capture());
+					assertThat(argumentCaptor.getValue().getRole()).isEqualTo(role);
+			}
+
+			@Order(11)
+			@DisplayName("Checking edge cases for email")
+			@ParameterizedTest(name="email=\"{0}\"")
+			@ValueSource(strings = {
+					"simple@example.com",
+					"user+tag@sub.domain.io",
+					"UPPERCASE@EXAMPLE.COM",
+					"123numeric@domain.org",
+					"dots.in.local@part.com"
+			})
+			void createUser_CheckingEMAILEdgeCases(String email)
+			{
+				UserRequestDTO userRequestDTO=new UserRequestDTO(email,TEST_ROLE);
+				User savedUser=User.builder().id(SAVED_USER_ID).email(email).password(ENCODED_PASSWORD).role(TEST_ROLE).isDeleted(false).build();
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				UserResponseDTO userResponseDTO=userService.createUser(userRequestDTO);
+				assertThat(userResponseDTO.email()).isEqualTo(email);
+				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
+				verify(userRepository).save(argumentCaptor.capture());
+				assertThat(argumentCaptor.getValue().getEmail()).isEqualTo(email);
+			}
+
+			@Test
+			@Order(12)
+			@DisplayName("Fully Object is pass to the repo")
+			void createUser_FullObjectStateInRepo()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
+				verify(userRepository).save(argumentCaptor.capture());
+				User user=argumentCaptor.getValue();
+				assertThat(user.getEmail()).isEqualTo(TEST_EMAIL);
+				assertThat(user.getPassword()).isEqualTo(ENCODED_PASSWORD);
+				assertThat(user.getRole()).isEqualTo(TEST_ROLE);
+				assertThat(user.isDeleted()).isFalse();
+			}
+
+			@Test
+			@Order(13)
+			@DisplayName("Should Never Pass Null User to the repo")
+			void createUser_NeverPassNullToRepo()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willReturn(savedUser);
+				userService.createUser(userRequest);
+				ArgumentCaptor<User>argumentCaptor= ArgumentCaptor.forClass(User.class);
+				verify(userRepository).save(argumentCaptor.capture());
+				assertThat(argumentCaptor.getValue()).isNotNull();
+			}
+
+			@Test
+			@Order(14)
+			@DisplayName("Should propogate Exception thrown by user rsponse")
+			void createUser_PropogateExceptionFromUserResponse()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+				given(userRepository.save(any(User.class))).willThrow(new RuntimeException("DB unavailiable"));
+				assertThatThrownBy(()->userService.createUser(userRequest)).isInstanceOf(RuntimeException.class).hasMessageContaining("DB unavailiable");
+			}
+
+			@Test
+			@Order(15)
+			@DisplayName("Should propogate exception thrown by password encoder")
+			void createUser_PropogateExceptionFromPasswordEncoder()
+			{
+				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willThrow(new RuntimeException("Encoding error"));
+				assertThatThrownBy(()->userService.createUser(userRequest)).isInstanceOf(RuntimeException.class).hasMessageContaining("Encoding error");
+				verifyNoMoreInteractions(userRepository);
+			}
+
+			@Test
+			@Order(16)
+			@DisplayName("Should never call repo when password encoding fail")
+				void createUser_NeverCallRepoOnPasswordEncoderFail()
+				{
+					given(passwordEncoder.encode(DEFAULT_PASSWORD)).willThrow(new RuntimeException("Encoding failure"));
+					assertThatThrownBy(()->userService.createUser(userRequest)).isInstanceOf(RuntimeException.class).hasMessageContaining("Encoding failure");
+					verify(userRepository,never()).save(any(User.class));
+				}
+		}
+
 }
