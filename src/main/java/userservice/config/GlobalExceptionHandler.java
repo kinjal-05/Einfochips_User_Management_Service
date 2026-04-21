@@ -46,21 +46,6 @@ public class GlobalExceptionHandler {
 				.body(ApiResponse.failure(ex.getMessage()));
 	}
 
-	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolation(
-			DataIntegrityViolationException ex) {
-
-		String message = "Database constraint violation";
-
-		String cause = ex.getMostSpecificCause().getMessage();
-		if (cause != null && cause.toLowerCase().contains("duplicate")) {
-			message = "Duplicate value detected. Please use a unique value.";
-		}
-
-		return ResponseEntity
-				.status(HttpStatus.CONFLICT)
-				.body(ApiResponse.failure(message));
-	}
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiResponse<Object>> handleGeneric(Exception ex) {

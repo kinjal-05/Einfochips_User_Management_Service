@@ -232,4 +232,6 @@ public class UserController {
 				.status(HttpStatus.OK)
 				.body(ApiResponse.success(null, "Password changed successfully"));
 	}
+
+
 }
