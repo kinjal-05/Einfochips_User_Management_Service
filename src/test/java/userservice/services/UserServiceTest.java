@@ -4,6 +4,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -96,14 +97,25 @@ class UserServiceTest {
 	@Nested
 	@DisplayName("Create User API Testing")
 	class CreateUser{
+
+
+		private UserResponseDTO executeCreateUser(UserRequestDTO request, User userToReturn) {
+			given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+			given(userRepository.save(any(User.class))).willReturn(userToReturn);
+			return userService.createUser(request);
+		}
+
+		private User captureSavedUser() {
+			ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
+			verify(userRepository).save(argumentCaptor.capture());
+			return argumentCaptor.getValue();
+		}
 			@Test
 			@Order(1)
 			@DisplayName("Should create User and return DTO")
 			void createUser_returnUserResponseDTO()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				UserResponseDTO responseDTO=userService.createUser(userRequest);
+				UserResponseDTO responseDTO=executeCreateUser(userRequest,savedUser);
 				assertThat(responseDTO).isNotNull();
 				assertThat(responseDTO.id()).isEqualTo(SAVED_USER_ID);
 				assertThat(responseDTO.email()).isEqualTo(TEST_EMAIL);
@@ -115,9 +127,7 @@ class UserServiceTest {
 			@DisplayName("Should always encode hard password")
 			void createUser_AlwaysEncodePassword()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
+				executeCreateUser(userRequest,savedUser);
 				verify(passwordEncoder,times(1)).encode(DEFAULT_PASSWORD);
 				verifyNoMoreInteractions(passwordEncoder);
 			}
@@ -127,12 +137,9 @@ class UserServiceTest {
 			@DisplayName("Should save user with isDeleted false")
 			void createUser_SetIsDeletedFalse()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
-				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
-				verify(userRepository).save(argumentCaptor.capture());
-				assertThat(argumentCaptor.getValue().isDeleted()).isFalse();
+				executeCreateUser(userRequest,savedUser);
+				User argumentCaptor=captureSavedUser();
+				assertThat(argumentCaptor.isDeleted()).isFalse();
 			}
 
 			@Test
@@ -140,12 +147,9 @@ class UserServiceTest {
 			@DisplayName("Should save user with encoded password")
 			void createUser_SavedEncodedPassword()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
-				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
-				verify(userRepository).save(argumentCaptor.capture());
-				assertThat(argumentCaptor.getValue().getPassword()).isEqualTo(ENCODED_PASSWORD).isNotEqualTo(DEFAULT_PASSWORD);
+				executeCreateUser(userRequest,savedUser);
+				User argumentCaptor=captureSavedUser();
+				assertThat(argumentCaptor.getPassword()).isEqualTo(ENCODED_PASSWORD).isNotEqualTo(DEFAULT_PASSWORD);
 			}
 
 			@Test
@@ -153,12 +157,9 @@ class UserServiceTest {
 			@DisplayName("Should save user with exact email from request")
 			void createUser_SavedWithExactEmail()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
-				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
-				verify(userRepository).save(argumentCaptor.capture());
-				assertThat(argumentCaptor.getValue().getEmail()).isEqualTo(TEST_EMAIL);
+				executeCreateUser(userRequest,savedUser);
+				User argumentCaptor=captureSavedUser();
+				assertThat(argumentCaptor.getEmail()).isEqualTo(TEST_EMAIL);
 			}
 
 			@Test
@@ -166,12 +167,9 @@ class UserServiceTest {
 			@DisplayName("Should save user with exact role")
 			void createUser_SavedWithExactRole()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
-				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
-				verify(userRepository).save(argumentCaptor.capture());
-				assertThat(argumentCaptor.getValue().getRole()).isEqualTo(TEST_ROLE);
+				executeCreateUser(userRequest,savedUser);
+				User argumentCaptor=captureSavedUser();
+				assertThat(argumentCaptor.getRole()).isEqualTo(TEST_ROLE);
 			}
 
 			@Test
@@ -179,9 +177,7 @@ class UserServiceTest {
 			@DisplayName("Should always call password encoder once")
 			void createUser_CallPasswordEncoderOnlyOnce()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
+				executeCreateUser(userRequest,savedUser);
 				verify(passwordEncoder,times(1)).encode(DEFAULT_PASSWORD);
 			}
 
@@ -190,9 +186,7 @@ class UserServiceTest {
 			@DisplayName("Should call user repository.save() only once")
 			void createUser_CallUserRepoOnlyOnce()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
+				executeCreateUser(userRequest,savedUser);
 				verify(userRepository,times(1)).save(any(User.class));
 			}
 
@@ -201,9 +195,7 @@ class UserServiceTest {
 			@DisplayName("Should not call any other repo method")
 			void createUser_NotCallAnyOtherMethod()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
+				executeCreateUser(userRequest,savedUser);
 				verify(userRepository,times(1)).save(any(User.class));
 				verifyNoMoreInteractions(userRepository);
 			}
@@ -216,13 +208,10 @@ class UserServiceTest {
 			{
 					UserRequestDTO userRequestDTO=new UserRequestDTO(TEST_EMAIL,role);
 					User savedUser=User.builder().id(SAVED_USER_ID).email(TEST_EMAIL).password(ENCODED_PASSWORD).role(role).isDeleted(false).build();
-					given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-					given(userRepository.save(any(User.class))).willReturn(savedUser);
-					UserResponseDTO userResponseDTO= userService.createUser(userRequestDTO);
+					UserResponseDTO userResponseDTO= executeCreateUser(userRequestDTO,savedUser);
 					assertThat(userResponseDTO.role()).isEqualTo(role);
-					ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
-					verify(userRepository).save(argumentCaptor.capture());
-					assertThat(argumentCaptor.getValue().getRole()).isEqualTo(role);
+					User argumentCaptor=captureSavedUser();
+					assertThat(argumentCaptor.getRole()).isEqualTo(role);
 			}
 
 			@Order(11)
@@ -239,13 +228,10 @@ class UserServiceTest {
 			{
 				UserRequestDTO userRequestDTO=new UserRequestDTO(email,TEST_ROLE);
 				User savedUser=User.builder().id(SAVED_USER_ID).email(email).password(ENCODED_PASSWORD).role(TEST_ROLE).isDeleted(false).build();
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				UserResponseDTO userResponseDTO=userService.createUser(userRequestDTO);
+				UserResponseDTO userResponseDTO=executeCreateUser(userRequestDTO,savedUser);
 				assertThat(userResponseDTO.email()).isEqualTo(email);
-				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
-				verify(userRepository).save(argumentCaptor.capture());
-				assertThat(argumentCaptor.getValue().getEmail()).isEqualTo(email);
+				User argumentCaptor=captureSavedUser();
+				assertThat(argumentCaptor.getEmail()).isEqualTo(email);
 			}
 
 			@Test
@@ -253,12 +239,8 @@ class UserServiceTest {
 			@DisplayName("Fully Object is pass to the repo")
 			void createUser_FullObjectStateInRepo()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
-				ArgumentCaptor<User>argumentCaptor=ArgumentCaptor.forClass(User.class);
-				verify(userRepository).save(argumentCaptor.capture());
-				User user=argumentCaptor.getValue();
+				executeCreateUser(userRequest,savedUser);
+				User user=captureSavedUser();
 				assertThat(user.getEmail()).isEqualTo(TEST_EMAIL);
 				assertThat(user.getPassword()).isEqualTo(ENCODED_PASSWORD);
 				assertThat(user.getRole()).isEqualTo(TEST_ROLE);
@@ -270,12 +252,9 @@ class UserServiceTest {
 			@DisplayName("Should Never Pass Null User to the repo")
 			void createUser_NeverPassNullToRepo()
 			{
-				given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
-				given(userRepository.save(any(User.class))).willReturn(savedUser);
-				userService.createUser(userRequest);
-				ArgumentCaptor<User>argumentCaptor= ArgumentCaptor.forClass(User.class);
-				verify(userRepository).save(argumentCaptor.capture());
-				assertThat(argumentCaptor.getValue()).isNotNull();
+				executeCreateUser(userRequest,savedUser);
+				User argumentCaptor=captureSavedUser();
+				assertThat(argumentCaptor).isNotNull();
 			}
 
 			@Test
@@ -307,6 +286,50 @@ class UserServiceTest {
 					assertThatThrownBy(()->userService.createUser(userRequest)).isInstanceOf(RuntimeException.class).hasMessageContaining("Encoding failure");
 					verify(userRepository,never()).save(any(User.class));
 				}
+
+				@Test
+				@Order(17)
+				@DisplayName("Should propogate data integrity violation exceptio in duplicated email")
+				void createUser_DataIntegrityExceptionOnDuplicateEmail()
+				{
+					given(passwordEncoder.encode(DEFAULT_PASSWORD)).willReturn(ENCODED_PASSWORD);
+					given(userRepository.save(any(User.class))).willThrow(new DataIntegrityViolationException("Duplicate entry for email"));
+					assertThatThrownBy(()->userService.createUser(userRequest)).isInstanceOf(DataIntegrityViolationException.class).hasMessageContaining("Duplicate entry for email");
+				}
+
+				@Test
+				@Order(18)
+				@DisplayName("Should throw null pointer exception when request is null")
+				void createUser_NullPointerException()
+				{
+					assertThatThrownBy(()->userService.createUser(null)).isInstanceOf(NullPointerException.class);
+				}
+
+				@Test
+				@Order(19)
+				@DisplayName("Should encode password first before saving it into DB")
+				void createUser_EncodePassFirstBeforeSavingInDB()
+				{
+					executeCreateUser(userRequest,savedUser);
+					var inOrder=inOrder(passwordEncoder,userRepository);
+					inOrder.verify(passwordEncoder).encode(DEFAULT_PASSWORD);
+					inOrder.verify(userRepository).save(any(User.class));
+				}
+
+			@Test
+			@Order(20)
+			@DisplayName("should return the entity returned by the repository, not the one built internally")
+			void createUser_ReturnsDTOMappedFromRepositoryResult() {
+				User dbEnrichedUser = User.builder()
+						.id(1)
+						.email(TEST_EMAIL)
+						.password(ENCODED_PASSWORD)
+						.role(TEST_ROLE)
+						.isDeleted(false)
+						.build();
+				UserResponseDTO result = executeCreateUser(userRequest,dbEnrichedUser);
+				assertThat(result.id()).isEqualTo(1);
+			}
 		}
 
 }
