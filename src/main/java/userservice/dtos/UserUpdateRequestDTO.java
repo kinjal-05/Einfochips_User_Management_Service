@@ -1,7 +1,6 @@
 package userservice.dtos;
 
 import userservice.enums.Role;
-
 import jakarta.validation.constraints.Email;
 
 /**

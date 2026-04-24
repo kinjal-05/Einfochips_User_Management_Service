@@ -12,11 +12,87 @@ import org.springframework.test.context.ActiveProfiles;
 import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
-
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
+
+/**
+ * Unit test class for {@code AuditorAwareImpl}.
+ *
+ * <p>This test suite validates the behavior of the auditing mechanism used by
+ * Spring Data JPA to automatically populate {@code createdBy} and
+ * {@code updatedBy} fields based on the currently authenticated user.
+ *
+ * <p><b>Testing Scope:</b>
+ * <ul>
+ *   <li>Service logic for retrieving the current auditor (user ID)</li>
+ *   <li>Integration with {@link SecurityContextHolder}</li>
+ *   <li>Handling of different authentication and principal scenarios</li>
+ * </ul>
+ *
+ * <p><b>Configuration:</b>
+ * <ul>
+ *   <li>Uses Mockito for mocking dependencies and security context</li>
+ *   <li>{@code @ActiveProfiles("test")} enables test-specific configuration</li>
+ *   <li>{@link MockitoAnnotations#openMocks(Object)} initializes mocks</li>
+ * </ul>
+ *
+ * <p><b>Mocked Dependencies:</b>
+ * <ul>
+ *   <li>{@link UserRepository} – (not directly used but part of class dependency)</li>
+ *   <li>{@link SecurityContext} and {@link Authentication} – simulate security context behavior</li>
+ * </ul>
+ *
+ * <p><b>Key Test Scenarios:</b>
+ * <ul>
+ *   <li><b>Authenticated User Present:</b>
+ *       <ul>
+ *         <li>Returns {@code Optional.of(userId)}</li>
+ *         <li>Extracts user ID from {@link CustomUserDetails}</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Not Authenticated:</b>
+ *       <ul>
+ *         <li>Returns {@code Optional.empty()}</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Anonymous User:</b>
+ *       <ul>
+ *         <li>Returns {@code Optional.of(0L)} as default system/anonymous identifier</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Invalid Principal:</b>
+ *       <ul>
+ *         <li>Handles cases where principal is not {@link CustomUserDetails}</li>
+ *         <li>Returns {@code Optional.empty()}</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Null Authentication:</b>
+ *       <ul>
+ *         <li>Handles missing security context gracefully</li>
+ *         <li>Returns {@code Optional.empty()}</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <p><b>Assertions:</b>
+ * <ul>
+ *   <li>Verifies presence or absence of auditor ID using {@link Optional}</li>
+ *   <li>Ensures correct user ID extraction</li>
+ * </ul>
+ *
+ * <p><b>Design Notes:</b>
+ * <ul>
+ *   <li>Ensures robustness of auditing logic across edge cases</li>
+ *   <li>Prevents runtime failures due to invalid security context states</li>
+ *   <li>Supports consistent population of audit fields in entities</li>
+ * </ul>
+ */
 @ActiveProfiles("test")
 class AuditorAwareImplTest {
 

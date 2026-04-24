@@ -18,14 +18,73 @@ import userservice.exceptions.ResourceNotFoundException;
 import userservice.security.CustomUserDetailsService;
 import userservice.security.JwtService;
 import userservice.services.ChangePasswordService;
-import userservice.services.UpdateUserService;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+/**
+ * Integration-style unit test for {@code ChangePasswordController}.
+ *
+ * <p>This test class verifies the behavior of the change password API endpoint
+ * using Spring's {@link MockMvc}. It ensures correct request handling,
+ * validation, exception mapping, and response structure under various scenarios.
+ *
+ * <p><b>Testing Scope:</b>
+ * <ul>
+ *   <li>Controller layer only (service layer is mocked)</li>
+ *   <li>HTTP request/response validation</li>
+ *   <li>Exception handling and status code mapping</li>
+ * </ul>
+ *
+ * <p><b>Configuration:</b>
+ * <ul>
+ *   <li>{@link WebMvcTest} loads only the controller and related MVC components</li>
+ *   <li>Security auto-configuration is excluded for isolated testing</li>
+ *   <li>{@code @AutoConfigureMockMvc(addFilters = false)} disables security filters</li>
+ *   <li>{@code @ActiveProfiles("test")} activates test configuration</li>
+ * </ul>
+ *
+ * <p><b>Mocked Dependencies:</b>
+ * <ul>
+ *   <li>{@link ChangePasswordService} – business logic layer</li>
+ *   <li>{@link PasswordEncoder}, {@link JwtService}, {@link CustomUserDetailsService}
+ *       – required for context loading but not directly tested</li>
+ * </ul>
+ *
+ * <p><b>Key Test Scenarios:</b>
+ * <ul>
+ *   <li><b>Success Case:</b>
+ *       Valid request returns HTTP 200 with success message</li>
+ *
+ *   <li><b>Validation Failure:</b>
+ *       Invalid input (blank fields) returns HTTP 400 and prevents service invocation</li>
+ *
+ *   <li><b>Authentication Failure:</b>
+ *       {@code BadCredentialsException} results in HTTP 401 (Unauthorized)</li>
+ *
+ *   <li><b>Resource Not Found:</b>
+ *       {@code ResourceNotFoundException} results in HTTP 404 (Not Found)</li>
+ *
+ *   <li><b>Unexpected Errors:</b>
+ *       Runtime exceptions return HTTP 500 (Internal Server Error)</li>
+ *
+ *   <li><b>Malformed JSON:</b>
+ *       Invalid request payload results in error response and no service interaction</li>
+ * </ul>
+ *
+ * <p><b>Validation:</b>
+ * Uses {@code jsonPath} to verify response structure and message correctness.
+ *
+ * <p><b>Design Notes:</b>
+ * <ul>
+ *   <li>Ensures full coverage of controller behavior</li>
+ *   <li>Verifies proper delegation to service layer</li>
+ *   <li>Prevents regression in API contract and error handling</li>
+ * </ul>
+ */
 @WebMvcTest(
 		controllers = ChangePasswordController.class,
 		excludeAutoConfiguration = {

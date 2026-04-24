@@ -16,7 +16,6 @@ import userservice.dtos.UserResponseDTO;
 import userservice.dtos.UserSearchRequestDTO;
 import userservice.enums.Role;
 import userservice.services.SearchUserService;
-
 import java.time.LocalDateTime;
 
 /**

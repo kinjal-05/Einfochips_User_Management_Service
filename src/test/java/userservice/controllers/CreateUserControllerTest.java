@@ -20,14 +20,70 @@ import userservice.enums.Role;
 import userservice.security.CustomUserDetailsService;
 import userservice.security.JwtService;
 import userservice.services.CreateUserService;
-import userservice.services.UserService;
-
 import java.time.LocalDateTime;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+/**
+ * Integration-style unit test for {@code CreateUserController}.
+ *
+ * <p>This test class validates the behavior of the user creation (registration)
+ * API endpoint using Spring's {@link MockMvc}. It ensures correct handling of
+ * HTTP requests, validation, service interaction, and response structure.
+ *
+ * <p><b>Testing Scope:</b>
+ * <ul>
+ *   <li>Controller layer only (service layer is mocked)</li>
+ *   <li>Request/response validation</li>
+ *   <li>Exception handling and HTTP status mapping</li>
+ * </ul>
+ *
+ * <p><b>Configuration:</b>
+ * <ul>
+ *   <li>{@link WebMvcTest} loads only MVC components for the specified controller</li>
+ *   <li>Security auto-configuration is excluded for isolated testing</li>
+ *   <li>{@code @AutoConfigureMockMvc(addFilters = false)} disables security filters</li>
+ *   <li>{@code @ActiveProfiles("test")} enables test-specific configuration</li>
+ * </ul>
+ *
+ * <p><b>Mocked Dependencies:</b>
+ * <ul>
+ *   <li>{@link CreateUserService} – handles business logic for user creation</li>
+ *   <li>{@link PasswordEncoder}, {@link JwtService}, {@link CustomUserDetailsService}
+ *       – required for context loading but not under test</li>
+ * </ul>
+ *
+ * <p><b>Key Test Scenarios:</b>
+ * <ul>
+ *   <li><b>Success Case:</b>
+ *       Valid request returns HTTP 201 (Created) with user details and success message</li>
+ *
+ *   <li><b>Validation Failure:</b>
+ *       Invalid input (empty email, null role) results in error response and
+ *       prevents service invocation</li>
+ *
+ *   <li><b>Service Failure:</b>
+ *       Runtime exception from service layer results in HTTP 500 (Internal Server Error)</li>
+ *
+ *   <li><b>Malformed JSON:</b>
+ *       Invalid request payload results in error response and no service interaction</li>
+ * </ul>
+ *
+ * <p><b>Response Validation:</b>
+ * <ul>
+ *   <li>Uses {@code jsonPath} to verify response message and returned user data</li>
+ *   <li>Ensures correct mapping of role and email fields</li>
+ * </ul>
+ *
+ * <p><b>Design Notes:</b>
+ * <ul>
+ *   <li>Ensures correctness of API contract for user creation</li>
+ *   <li>Validates controller-service interaction</li>
+ *   <li>Prevents regressions in validation and exception handling</li>
+ * </ul>
+ */
 @WebMvcTest(
 		controllers = CreateUserController.class,
 		excludeAutoConfiguration = {

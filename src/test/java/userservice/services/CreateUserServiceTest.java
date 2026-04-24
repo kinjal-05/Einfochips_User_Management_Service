@@ -26,13 +26,99 @@ import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
 import userservice.security.JwtService;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
+
+/**
+ * Comprehensive unit test suite for {@link CreateUserServiceImpl#createUser(UserRequestDTO)}.
+ *
+ * <p>This test class validates the behavior of the user creation workflow in isolation
+ * using Mockito and JUnit 5. It ensures correctness, data integrity, and security
+ * when creating new users in the system.</p>
+ *
+ * <h3>Test Coverage</h3>
+ * <ul>
+ *   <li><b>Happy Path:</b>
+ *       Verifies successful user creation and correct mapping to {@link UserResponseDTO}.</li>
+ *
+ *   <li><b>Password Handling:</b>
+ *       <ul>
+ *           <li>Ensures default password is always encoded before persistence</li>
+ *           <li>Validates encoded password is stored (never plain text)</li>
+ *           <li>Confirms encoder is invoked exactly once</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Data Integrity:</b>
+ *       <ul>
+ *           <li>Ensures {@code isDeleted} is set to false for new users</li>
+ *           <li>Validates correct email and role assignment</li>
+ *           <li>Confirms full object state passed to repository</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Repository Interaction:</b>
+ *       <ul>
+ *           <li>Ensures {@code save()} is called exactly once</li>
+ *           <li>Verifies no unnecessary repository interactions</li>
+ *           <li>Captures and inspects persisted entity using {@link ArgumentCaptor}</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>DTO Mapping:</b>
+ *       Ensures response is derived from the persisted entity returned by the repository,
+ *       not from the pre-save object.</li>
+ *
+ *   <li><b>Parameterized Testing:</b>
+ *       <ul>
+ *           <li>Validates behavior across all {@link Role} enum values</li>
+ *           <li>Tests multiple valid email formats and edge cases</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Execution Order Validation:</b>
+ *       Confirms password encoding occurs before database persistence.</li>
+ *
+ *   <li><b>Exception Handling:</b>
+ *       <ul>
+ *           <li>Propagates exceptions from {@link PasswordEncoder}</li>
+ *           <li>Propagates exceptions from {@link UserRepository}</li>
+ *           <li>Handles {@link DataIntegrityViolationException} (e.g., duplicate email)</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Edge Cases:</b>
+ *       <ul>
+ *           <li>Null request handling</li>
+ *           <li>Ensures no repository interaction when encoding fails</li>
+ *           <li>Ensures no null entity is passed to repository</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <h3>Testing Strategy</h3>
+ * <ul>
+ *   <li>Uses {@link MockitoExtension} for mock initialization</li>
+ *   <li>Follows Arrange-Act-Assert pattern</li>
+ *   <li>Reusable helper methods for setup and verification</li>
+ *   <li>Focuses on behavior verification and contract testing</li>
+ * </ul>
+ *
+ * <h3>Key Design Considerations</h3>
+ * <ul>
+ *   <li>Ensures strict isolation of business logic</li>
+ *   <li>Validates security best practices (password hashing)</li>
+ *   <li>Prevents regression in user creation workflow</li>
+ *   <li>Maintains high readability and maintainability</li>
+ * </ul>
+ *
+ * <p>This test suite is designed to meet production-grade quality standards
+ * and ensure reliability of the user creation functionality.</p>
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - createUser()")
 @ActiveProfiles("test")

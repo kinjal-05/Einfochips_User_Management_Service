@@ -3,9 +3,7 @@ package userservice.config;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.springframework.data.jpa.domain.Specification;
-
 import userservice.enums.Role;
 import userservice.models.User;
 import jakarta.persistence.criteria.Predicate;

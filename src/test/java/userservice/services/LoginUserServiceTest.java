@@ -22,7 +22,6 @@ import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
 import userservice.security.JwtService;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +29,95 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
+
+/**
+ * Comprehensive unit test suite for {@link LoginUserServiceImpl#login(LoginRequestDTO)}.
+ *
+ * <p>This test class validates the login/authentication workflow in isolation
+ * using Mockito and JUnit 5. It ensures correct authentication handling,
+ * JWT generation, response construction, and robust error propagation.</p>
+ *
+ * <h3>Test Coverage</h3>
+ * <ul>
+ *   <li><b>Happy Path:</b>
+ *       Verifies successful authentication and ensures a fully populated
+ *       {@link LoginResponseDTO} is returned.</li>
+ *
+ *   <li><b>Authentication Flow:</b>
+ *       <ul>
+ *           <li>Ensures credentials are passed correctly to {@link AuthenticationManager}</li>
+ *           <li>Validates {@link Authentication#getPrincipal()} is used to extract user details</li>
+ *           <li>Confirms proper casting to {@link CustomUserDetails}</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>JWT Token Handling:</b>
+ *       <ul>
+ *           <li>Ensures token is generated using {@link JwtService}</li>
+ *           <li>Validates token is embedded correctly in the response DTO</li>
+ *           <li>Confirms token generation occurs only after successful authentication</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Response Validation:</b>
+ *       <ul>
+ *           <li>Verifies correctness of user ID, email, role, and message</li>
+ *           <li>Ensures response is never null</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Interaction Verification:</b>
+ *       <ul>
+ *           <li>Ensures {@code authenticate()} is called exactly once</li>
+ *           <li>Ensures {@code generateToken()} is called exactly once</li>
+ *           <li>Validates correct order of operations (authenticate → principal → token)</li>
+ *           <li>Confirms no unnecessary interactions with dependencies</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Exception Handling:</b>
+ *       <ul>
+ *           <li>Propagates {@link BadCredentialsException} for invalid credentials</li>
+ *           <li>Handles {@link DisabledException} for disabled accounts</li>
+ *           <li>Handles {@link LockedException} for locked accounts</li>
+ *           <li>Propagates {@link ClassCastException} for invalid principal type</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Failure Scenarios:</b>
+ *       <ul>
+ *           <li>Ensures JWT generation is skipped when authentication fails</li>
+ *           <li>Ensures principal extraction is skipped on failure</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Edge Cases:</b>
+ *       <ul>
+ *           <li>Null request handling</li>
+ *           <li>Invalid principal type handling</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <h3>Testing Strategy</h3>
+ * <ul>
+ *   <li>Uses {@link MockitoExtension} for mock initialization</li>
+ *   <li>Follows Arrange-Act-Assert pattern</li>
+ *   <li>Uses helper methods for reusable authentication stubbing</li>
+ *   <li>Captures arguments to validate correctness of authentication requests</li>
+ * </ul>
+ *
+ * <h3>Key Design Considerations</h3>
+ * <ul>
+ *   <li>Ensures strict isolation of authentication logic</li>
+ *   <li>Validates secure handling of credentials and tokens</li>
+ *   <li>Prevents regression in login and security workflows</li>
+ *   <li>Maintains high readability and maintainability</li>
+ * </ul>
+ *
+ * <p>This test suite is designed to meet production-grade standards and ensure
+ * reliability, security, and correctness of the login functionality.</p>
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - login()")
 @ActiveProfiles("test")

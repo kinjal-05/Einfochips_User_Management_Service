@@ -12,12 +12,91 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 import userservice.enums.Role;
 import userservice.models.User;
-
 import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
+/**
+ * Unit test class for {@code UserSpecification}.
+ *
+ * <p>This test suite validates the dynamic filtering logic implemented using
+ * Spring Data JPA {@link Specification}. It ensures that the correct
+ * {@link Predicate}s are constructed based on various combinations of
+ * input filter parameters.
+ *
+ * <p><b>Testing Strategy:</b>
+ * <ul>
+ *   <li>Uses {@link org.mockito.Mockito} to mock JPA Criteria API components:
+ *       {@link Root}, {@link CriteriaQuery}, and {@link CriteriaBuilder}</li>
+ *
+ *   <li>Verifies interaction with {@link CriteriaBuilder} methods such as:
+ *       <ul>
+ *         <li>{@code like()} for email filtering</li>
+ *         <li>{@code equal()} for role and audit fields</li>
+ *         <li>{@code greaterThanOrEqualTo()} and {@code lessThanOrEqualTo()} for date ranges</li>
+ *         <li>{@code isFalse()} for soft delete filtering</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li>Ensures predicates are conditionally added only when corresponding
+ *       filter values are non-null and valid.</li>
+ * </ul>
+ *
+ * <p><b>Key Test Scenarios:</b>
+ * <ul>
+ *   <li><b>Soft Delete Filter:</b>
+ *       Always verifies that {@code isDeleted = false} predicate is applied.</li>
+ *
+ *   <li><b>Email Filter:</b>
+ *       <ul>
+ *         <li>Ignored when null, empty, or blank</li>
+ *         <li>Applies case-insensitive {@code LIKE} query when valid</li>
+ *         <li>Ensures trimming of whitespace</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Role Filter:</b>
+ *       Applied only when role is non-null using {@code EQUAL} predicate.</li>
+ *
+ *   <li><b>Audit Filters:</b>
+ *       <ul>
+ *         <li>{@code createdById} and {@code updatedById} use {@code EQUAL}</li>
+ *         <li>Ignored when null</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Date Range Filters:</b>
+ *       <ul>
+ *         <li>{@code fromDate} → {@code greaterThanOrEqualTo}</li>
+ *         <li>{@code toDate} → {@code lessThanOrEqualTo}</li>
+ *         <li>Ignored when null</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Combination Scenarios:</b>
+ *       <ul>
+ *         <li>No filters → only soft delete predicate applied</li>
+ *         <li>All filters → all predicates combined using {@code AND}</li>
+ *         <li>Partial filters → only relevant predicates included</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <p><b>Design Notes:</b>
+ * <ul>
+ *   <li>Ensures correctness of dynamic query generation logic</li>
+ *   <li>Prevents unnecessary predicate creation for invalid inputs</li>
+ *   <li>Improves maintainability and reliability of filtering functionality</li>
+ * </ul>
+ *
+ * <p><b>Annotations Used:</b>
+ * <ul>
+ *   <li>{@code @ExtendWith(MockitoExtension.class)} for Mockito support</li>
+ *   <li>{@code @ActiveProfiles("test")} to activate test configuration</li>
+ *   <li>{@code @Nested} and {@code @DisplayName} for structured and readable test cases</li>
+ * </ul>
+ */
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class UserSpecificationTest {

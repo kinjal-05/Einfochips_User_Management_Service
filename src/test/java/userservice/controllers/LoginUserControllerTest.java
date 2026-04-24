@@ -19,9 +19,7 @@ import userservice.dtos.LoginResponseDTO;
 import userservice.enums.Role;
 import userservice.security.CustomUserDetailsService;
 import userservice.security.JwtService;
-import userservice.services.CreateUserService;
 import userservice.services.LoginUserService;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -29,6 +27,67 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+/**
+ * Integration-style unit test for {@code LoginController}.
+ *
+ * <p>This test class validates the behavior of the login API endpoint using
+ * Spring's {@link MockMvc}. It ensures correct handling of authentication requests,
+ * validation, service interaction, and response mapping for various scenarios.
+ *
+ * <p><b>Testing Scope:</b>
+ * <ul>
+ *   <li>Controller layer only (service layer is mocked)</li>
+ *   <li>HTTP request/response validation</li>
+ *   <li>Exception handling and status code mapping</li>
+ * </ul>
+ *
+ * <p><b>Configuration:</b>
+ * <ul>
+ *   <li>{@link WebMvcTest} loads only the specified controller and MVC components</li>
+ *   <li>Security auto-configuration is excluded for isolated testing</li>
+ *   <li>{@code @AutoConfigureMockMvc(addFilters = false)} disables security filters</li>
+ *   <li>{@code @ActiveProfiles("test")} activates test-specific configuration</li>
+ * </ul>
+ *
+ * <p><b>Mocked Dependencies:</b>
+ * <ul>
+ *   <li>{@link LoginUserService} – handles authentication business logic</li>
+ *   <li>{@link PasswordEncoder}, {@link JwtService}, {@link CustomUserDetailsService}
+ *       – required for application context but not directly tested</li>
+ * </ul>
+ *
+ * <p><b>Key Test Scenarios:</b>
+ * <ul>
+ *   <li><b>Success Case:</b>
+ *       Valid credentials return HTTP 200 with user details, JWT token, and success message</li>
+ *
+ *   <li><b>Validation Failure:</b>
+ *       Invalid input (empty email/password) returns HTTP 400 and prevents service invocation</li>
+ *
+ *   <li><b>Authentication Failure:</b>
+ *       {@link BadCredentialsException} results in HTTP 401 (Unauthorized)</li>
+ *
+ *   <li><b>Service Failure:</b>
+ *       Runtime exception from service layer results in HTTP 500 (Internal Server Error)</li>
+ *
+ *   <li><b>Malformed JSON:</b>
+ *       Invalid request payload results in error response and no service interaction</li>
+ * </ul>
+ *
+ * <p><b>Response Validation:</b>
+ * <ul>
+ *   <li>Uses {@code jsonPath} to verify response message, user details, and JWT token</li>
+ *   <li>Ensures correctness of ID, email, role, and token fields</li>
+ * </ul>
+ *
+ * <p><b>Design Notes:</b>
+ * <ul>
+ *   <li>Ensures correctness of authentication API contract</li>
+ *   <li>Validates controller-service interaction</li>
+ *   <li>Prevents regression in validation, security, and exception handling</li>
+ * </ul>
+ */
 @WebMvcTest(
 		controllers = LoginController.class,
 		excludeAutoConfiguration = {

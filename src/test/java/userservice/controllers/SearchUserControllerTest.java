@@ -20,12 +20,9 @@ import userservice.dtos.UserSearchRequestDTO;
 import userservice.enums.Role;
 import userservice.security.CustomUserDetailsService;
 import userservice.security.JwtService;
-import userservice.services.LoginUserService;
 import userservice.services.SearchUserService;
-
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -33,6 +30,65 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+/**
+ * Integration-style unit test for {@code SearchUserController}.
+ *
+ * <p>This test class validates the behavior of the user search API endpoint
+ * using Spring's {@link MockMvc}. It ensures correct handling of query parameters,
+ * pagination, filtering logic delegation, and response mapping.
+ *
+ * <p><b>Testing Scope:</b>
+ * <ul>
+ *   <li>Controller layer only (service layer is mocked)</li>
+ *   <li>HTTP request/response validation</li>
+ *   <li>Query parameter binding and validation</li>
+ *   <li>Exception handling and status code mapping</li>
+ * </ul>
+ *
+ * <p><b>Configuration:</b>
+ * <ul>
+ *   <li>{@link WebMvcTest} loads only the specified controller and MVC components</li>
+ *   <li>Security auto-configuration is excluded for isolated testing</li>
+ *   <li>{@code @AutoConfigureMockMvc(addFilters = false)} disables security filters</li>
+ *   <li>{@code @ActiveProfiles("test")} activates test-specific configuration</li>
+ * </ul>
+ *
+ * <p><b>Mocked Dependencies:</b>
+ * <ul>
+ *   <li>{@link SearchUserService} – handles business logic for user search</li>
+ *   <li>{@link PasswordEncoder}, {@link JwtService}, {@link CustomUserDetailsService}
+ *       – required for application context but not directly tested</li>
+ * </ul>
+ *
+ * <p><b>Key Test Scenarios:</b>
+ * <ul>
+ *   <li><b>Success Case (All Filters):</b>
+ *       Valid query parameters return HTTP 200 with paginated user results</li>
+ *
+ *   <li><b>Invalid Role Enum:</b>
+ *       Incorrect role value results in error response and prevents service invocation</li>
+ *
+ *   <li><b>Invalid Date Format:</b>
+ *       Improper date format results in error response and prevents service invocation</li>
+ *
+ *   <li><b>Service Failure:</b>
+ *       Runtime exception from service layer results in HTTP 500 (Internal Server Error)</li>
+ * </ul>
+ *
+ * <p><b>Response Validation:</b>
+ * <ul>
+ *   <li>Uses {@code jsonPath} to verify response message and paginated content</li>
+ *   <li>Ensures correctness of email, role, and pagination structure</li>
+ * </ul>
+ *
+ * <p><b>Design Notes:</b>
+ * <ul>
+ *   <li>Ensures correctness of dynamic search API contract</li>
+ *   <li>Validates query parameter binding and filtering behavior</li>
+ *   <li>Prevents regressions in pagination, filtering, and error handling</li>
+ * </ul>
+ */
 @WebMvcTest(
 		controllers = SearchUserController.class,
 		excludeAutoConfiguration = {

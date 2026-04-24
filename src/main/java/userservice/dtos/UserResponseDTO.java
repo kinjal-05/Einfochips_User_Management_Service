@@ -1,7 +1,6 @@
 package userservice.dtos;
 
 import java.time.LocalDateTime;
-
 import userservice.enums.Role;
 
 /**

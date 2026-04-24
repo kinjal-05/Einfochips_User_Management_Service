@@ -26,10 +26,8 @@ import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
 import userservice.security.JwtService;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
-
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -40,6 +38,90 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 
+
+/**
+ * Comprehensive unit test suite for {@link ChangePasswordServiceImpl#changePassword(ChangePasswordRequestDTO)}.
+ *
+ * <p>This test class validates the behavior of the change password functionality
+ * in isolation using Mockito and JUnit 5. It ensures correctness, security,
+ * and robustness of the password update workflow under various scenarios.</p>
+ *
+ * <h3>Test Coverage</h3>
+ * <ul>
+ *   <li><b>Happy Path:</b>
+ *       Verifies successful password change when the user is authenticated,
+ *       exists in the system, and provides the correct old password.</li>
+ *
+ *   <li><b>Authentication Validation:</b>
+ *       Ensures proper handling when:
+ *       <ul>
+ *           <li>Authentication is null</li>
+ *           <li>User is not authenticated</li>
+ *           <li>Principal is anonymous</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>User Validation:</b>
+ *       Confirms {@link ResourceNotFoundException} is thrown when the user
+ *       cannot be found by email.</li>
+ *
+ *   <li><b>Password Validation:</b>
+ *       Ensures {@link BadCredentialsException} is thrown when:
+ *       <ul>
+ *           <li>Old password does not match</li>
+ *           <li>Invalid password inputs are provided</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Security Guarantees:</b>
+ *       <ul>
+ *           <li>Password is always stored in encoded (hashed) form</li>
+ *           <li>Plain text passwords are never persisted</li>
+ *           <li>Old password is verified before encoding new password</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Interaction Verification:</b>
+ *       <ul>
+ *           <li>Validates correct method invocation order</li>
+ *           <li>Ensures no unnecessary interactions with dependencies</li>
+ *           <li>Confirms exact invocation counts</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Failure & Exception Handling:</b>
+ *       <ul>
+ *           <li>Propagates repository and encoder exceptions correctly</li>
+ *           <li>Prevents further execution on failure conditions</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Edge Cases:</b>
+ *       <ul>
+ *           <li>Null request handling</li>
+ *           <li>Null password inputs</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <h3>Testing Strategy</h3>
+ * <ul>
+ *   <li>Uses {@link MockitoExtension} for mock initialization</li>
+ *   <li>Mocks static {@link SecurityContextHolder} for authentication context</li>
+ *   <li>Follows Arrange-Act-Assert pattern</li>
+ *   <li>Reusable helper methods for common stubbing logic</li>
+ * </ul>
+ *
+ * <h3>Key Design Considerations</h3>
+ * <ul>
+ *   <li>Ensures strict isolation of service logic</li>
+ *   <li>Focuses on behavior verification rather than implementation details</li>
+ *   <li>Prevents regression in authentication and password handling logic</li>
+ * </ul>
+ *
+ * <p>This test suite is designed to be maintainable, readable, and aligned with
+ * production-grade testing standards.</p>
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - changePassword()")
 @ActiveProfiles("test")

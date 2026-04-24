@@ -23,16 +23,95 @@ import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
 import userservice.security.JwtService;
-
 import java.time.LocalDateTime;
-import java.util.Optional;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
+
+/**
+ * Comprehensive unit test suite for {@link GetUserByIdServiceImpl)}.
+ *
+ * <p>This test class verifies the behavior of the user retrieval workflow
+ * in isolation using Mockito and JUnit 5. It ensures correct data fetching,
+ * mapping, and error handling when retrieving a user by ID.</p>
+ *
+ * <h3>Test Coverage</h3>
+ * <ul>
+ *   <li><b>Happy Path:</b>
+ *       Ensures a valid user is successfully retrieved and mapped to
+ *       {@link UserResponseDTO}.</li>
+ *
+ *   <li><b>DTO Mapping Validation:</b>
+ *       Verifies that all fields are correctly mapped:
+ *       <ul>
+ *           <li>ID</li>
+ *           <li>Email</li>
+ *           <li>Role</li>
+ *           <li>Created/Updated timestamps</li>
+ *           <li>CreatedBy / UpdatedBy</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Dependency Interaction:</b>
+ *       <ul>
+ *           <li>Ensures {@link GetActiveUser} is called exactly once</li>
+ *           <li>Validates mapper is invoked correctly</li>
+ *           <li>Confirms no unnecessary dependency interactions</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Repository Safety:</b>
+ *       <ul>
+ *           <li>Ensures no mutation operations (save/delete) are invoked</li>
+ *           <li>Validates repository is not used directly in this flow</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Exception Handling:</b>
+ *       <ul>
+ *           <li>Throws {@link ResourceNotFoundException} for non-existent IDs</li>
+ *           <li>Handles invalid inputs (zero, negative IDs)</li>
+ *           <li>Propagates runtime exceptions from dependencies</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Parameterized Testing:</b>
+ *       <ul>
+ *           <li>Validates behavior for multiple valid IDs</li>
+ *           <li>Ensures proper handling of non-existent IDs</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Edge Cases:</b>
+ *       <ul>
+ *           <li>Zero and negative ID validation</li>
+ *           <li>Ensures no further execution when exceptions occur</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <h3>Testing Strategy</h3>
+ * <ul>
+ *   <li>Uses {@link MockitoExtension} for mock initialization</li>
+ *   <li>Follows Arrange-Act-Assert pattern</li>
+ *   <li>Uses helper methods for reusable stubbing logic</li>
+ *   <li>Focuses on behavior verification and contract validation</li>
+ * </ul>
+ *
+ * <h3>Key Design Considerations</h3>
+ * <ul>
+ *   <li>Ensures strict separation of concerns (service vs data access)</li>
+ *   <li>Validates read-only behavior (no side effects)</li>
+ *   <li>Prevents regression in user retrieval logic</li>
+ *   <li>Maintains high readability and maintainability</li>
+ * </ul>
+ *
+ * <p>This test suite is designed to meet production-grade standards
+ * and ensure reliability of the user retrieval functionality.</p>
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - GetUserById()")
 @ActiveProfiles("test")

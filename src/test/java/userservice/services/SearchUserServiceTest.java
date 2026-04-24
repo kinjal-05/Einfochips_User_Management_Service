@@ -30,10 +30,8 @@ import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
 import userservice.security.JwtService;
-
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +39,104 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
+
+/**
+ * Comprehensive unit test suite for {@link SearchUserServiceImpl#searchUsers(UserSearchRequestDTO, Pageable)}.
+ *
+ * <p>This test class validates the user search functionality in isolation using
+ * Mockito and JUnit 5. It ensures correct filtering, pagination handling,
+ * entity-to-DTO mapping, and robust interaction with the repository layer.</p>
+ *
+ * <h3>Test Coverage</h3>
+ * <ul>
+ *   <li><b>Happy Path:</b>
+ *       Verifies successful retrieval of users as a paginated {@link Page}
+ *       of {@link UserResponseDTO}.</li>
+ *
+ *   <li><b>Pagination Handling:</b>
+ *       <ul>
+ *           <li>Preserves page number, size, and total pages</li>
+ *           <li>Validates total element count</li>
+ *           <li>Handles empty, single, and multi-element pages</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>DTO Mapping:</b>
+ *       <ul>
+ *           <li>Ensures each {@link User} entity is mapped to {@link UserResponseDTO}</li>
+ *           <li>Validates all fields (id, email, role, timestamps, audit fields)</li>
+ *           <li>Supports mapping across multiple entities</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Specification & Filtering:</b>
+ *       <ul>
+ *           <li>Ensures a non-null {@link Specification} is always passed to repository</li>
+ *           <li>Validates behavior with various filters:
+ *               <ul>
+ *                   <li>Email filter</li>
+ *                   <li>Role filter</li>
+ *                   <li>Date range filter</li>
+ *                   <li>All-null filters</li>
+ *               </ul>
+ *           </li>
+ *           <li>Confirms repository is invoked exactly once regardless of filters</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Repository Interaction:</b>
+ *       <ul>
+ *           <li>Ensures {@code findAll(Specification, Pageable)} is called exactly once</li>
+ *           <li>Validates correct {@link Pageable} is passed</li>
+ *           <li>Confirms no additional repository interactions</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Dependency Isolation:</b>
+ *       <ul>
+ *           <li>Ensures no interaction with unrelated dependencies
+ *               (e.g., {@link PasswordEncoder}, {@link AuthenticationManager}, {@link JwtService})</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Exception Handling:</b>
+ *       <ul>
+ *           <li>Propagates runtime exceptions thrown by repository</li>
+ *           <li>Handles null inputs (request, pageable)</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Edge Cases:</b>
+ *       <ul>
+ *           <li>Empty result set</li>
+ *           <li>Null filter fields</li>
+ *           <li>Single-element result</li>
+ *       </ul>
+ *   </li>
+ *
+ *   <li><b>Parameterized Testing:</b>
+ *       Ensures correct mapping behavior for all {@link Role} enum values.</li>
+ * </ul>
+ *
+ * <h3>Testing Strategy</h3>
+ * <ul>
+ *   <li>Uses {@link MockitoExtension} for mock initialization</li>
+ *   <li>Follows Arrange-Act-Assert pattern</li>
+ *   <li>Utilizes helper methods for reusable stubbing logic</li>
+ *   <li>Captures and verifies {@link Specification} and {@link Pageable} arguments</li>
+ * </ul>
+ *
+ * <h3>Key Design Considerations</h3>
+ * <ul>
+ *   <li>Ensures strict separation between service logic and data access layer</li>
+ *   <li>Validates correctness of dynamic query construction via Specification</li>
+ *   <li>Prevents regression in filtering and pagination behavior</li>
+ *   <li>Maintains high readability and maintainability</li>
+ * </ul>
+ *
+ * <p>This test suite is designed to meet production-grade standards and ensure
+ * reliability, correctness, and scalability of the user search functionality.</p>
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - searchUser()")
 @ActiveProfiles("test")

@@ -24,15 +24,40 @@ import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
 import userservice.security.JwtService;
-
 import java.time.LocalDateTime;
-
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.*;
 
+
+/**
+ * Test suite for SoftDeleteUserServiceImpl.softDeleteUser()
+ *
+ * This suite validates the behavior of soft deletion in the User Service.
+ *
+ * Key responsibilities of the method under test:
+ * 1. Fetch an active (non-deleted) user using GetActiveUser utility
+ * 2. Delegate deletion to UserRepository.delete()
+ * 3. Rely on @SQLDelete for converting DELETE into soft-delete UPDATE
+ *
+ * Important Design Contracts:
+ * - This method is VOID → no return value should be asserted
+ * - Soft delete is handled at the persistence layer (Hibernate @SQLDelete)
+ * - Service MUST NOT manually modify isDeleted or deletedTimestamp
+ * - Only active users should be fetched (via findActiveById internally)
+ *
+ * What is NOT tested here:
+ * - Actual SQL execution (covered in integration tests)
+ * - Hibernate behavior of @SQLDelete
+ *
+ * Testing Strategy:
+ * - Behavior verification using Mockito
+ * - Interaction-based assertions (verify calls & order)
+ * - Exception propagation validation
+ * - Argument capture to validate passed entity
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - softDeleteUser()")
 @ActiveProfiles("test")

@@ -19,11 +19,8 @@ import userservice.enums.Role;
 import userservice.exceptions.ResourceNotFoundException;
 import userservice.security.CustomUserDetailsService;
 import userservice.security.JwtService;
-import userservice.services.SearchUserService;
 import userservice.services.UpdateUserService;
-
 import java.time.LocalDateTime;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -32,6 +29,68 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+/**
+ * Integration-style unit test for {@code UpdateUserController}.
+ *
+ * <p>This test class validates the behavior of the user update API endpoint
+ * using Spring's {@link MockMvc}. It ensures correct handling of HTTP PATCH requests,
+ * request body validation, service interaction, and response mapping.
+ *
+ * <p><b>Testing Scope:</b>
+ * <ul>
+ *   <li>Controller layer only (service layer is mocked)</li>
+ *   <li>HTTP request/response validation</li>
+ *   <li>Request body binding and validation</li>
+ *   <li>Exception handling and status code mapping</li>
+ * </ul>
+ *
+ * <p><b>Configuration:</b>
+ * <ul>
+ *   <li>{@link WebMvcTest} loads only the specified controller and MVC components</li>
+ *   <li>Security auto-configuration is excluded for isolated testing</li>
+ *   <li>{@code @AutoConfigureMockMvc(addFilters = false)} disables security filters</li>
+ *   <li>{@code @ActiveProfiles("test")} activates test-specific configuration</li>
+ * </ul>
+ *
+ * <p><b>Mocked Dependencies:</b>
+ * <ul>
+ *   <li>{@link UpdateUserService} – handles business logic for updating users</li>
+ *   <li>{@link PasswordEncoder}, {@link JwtService}, {@link CustomUserDetailsService}
+ *       – required for application context but not directly tested</li>
+ * </ul>
+ *
+ * <p><b>Key Test Scenarios:</b>
+ * <ul>
+ *   <li><b>Success Case:</b>
+ *       Valid request returns HTTP 200 with updated user details and success message</li>
+ *
+ *   <li><b>User Not Found:</b>
+ *       {@link ResourceNotFoundException} results in HTTP 404 (Not Found)</li>
+ *
+ *   <li><b>Invalid Request Body:</b>
+ *       Invalid input (e.g., empty email, null role) tests request validation behavior</li>
+ *
+ *   <li><b>Service Failure:</b>
+ *       Runtime exception from service layer results in HTTP 500 (Internal Server Error)</li>
+ *
+ *   <li><b>Malformed JSON:</b>
+ *       Invalid request payload results in error response and prevents service invocation</li>
+ * </ul>
+ *
+ * <p><b>Response Validation:</b>
+ * <ul>
+ *   <li>Uses {@code jsonPath} to verify response message and updated user data</li>
+ *   <li>Ensures correctness of email and role fields</li>
+ * </ul>
+ *
+ * <p><b>Design Notes:</b>
+ * <ul>
+ *   <li>Ensures correctness of update API contract</li>
+ *   <li>Validates controller-service interaction</li>
+ *   <li>Prevents regression in validation, update logic, and error handling</li>
+ * </ul>
+ */
 @WebMvcTest(
 		controllers = UpdateUserController.class,
 		excludeAutoConfiguration = {

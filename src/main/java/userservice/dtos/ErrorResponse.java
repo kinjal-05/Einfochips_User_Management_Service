@@ -1,7 +1,6 @@
 package userservice.dtos;
 
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 /**
