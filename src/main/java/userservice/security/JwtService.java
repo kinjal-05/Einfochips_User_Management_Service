@@ -46,9 +46,11 @@ public class JwtService {
 
 	public boolean isTokenValid(String token, UserDetails userDetails) {
 		final String email = extractUsername(token);
-		return email.equals(userDetails.getUsername())
-				&& !isTokenExpired(token)
-				&& userDetails.isEnabled();
+		boolean isSameUser = email.equals(userDetails.getUsername());
+		boolean notExpired = !isTokenExpired(token);
+		boolean enabled = userDetails.isEnabled();
+
+		return isSameUser && notExpired && enabled;
 	}
 
 	private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails) {

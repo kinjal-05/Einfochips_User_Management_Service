@@ -26,7 +26,6 @@
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 	public class UserServiceImpl implements UserService {
 
 		private final UserRepository userRepository;
@@ -35,7 +34,7 @@
 		private final JwtService jwtService;
 
 		@Override
-		@Transactional(readOnly = true)
+		@Transactional
 		public UserResponseDTO createUser(UserRequestDTO request) {
 			String defaultPassword = "Temp@12345";
 			User user = User.builder()

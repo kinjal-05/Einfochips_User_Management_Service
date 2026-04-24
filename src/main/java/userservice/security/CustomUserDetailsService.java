@@ -14,7 +14,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-	private final UserRepository userRepository;  // ← ONLY this field here
+	private final UserRepository userRepository;  //ONLY this field here
 
 	@Override
 	public UserDetails loadUserByUsername(String email)

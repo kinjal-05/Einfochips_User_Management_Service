@@ -65,7 +65,7 @@ public class UserSpecification {
 			 * Matches: kinjal@gmail.com, testkinjal@yahoo.com
 			 */
 
-			// ✅ Always exclude soft-deleted users
+			// Always exclude soft-deleted users
 			predicates.add(cb.isFalse(root.get("isDeleted")));
 			if (email != null && !email.trim().isEmpty()) {
 				predicates.add(

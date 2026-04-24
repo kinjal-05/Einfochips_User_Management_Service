@@ -12,7 +12,7 @@ import java.util.List;
 public class CustomUserDetails implements UserDetails {
 
 	@Getter
-	private final User user;  // ← getUser() used by JwtService
+	private final User user;  // getUser() used by JwtService
 
 	public CustomUserDetails(User user) {
 		this.user = user;

@@ -125,7 +125,7 @@ class AuditorAwareImplTest {
 		Optional<Long> result = auditorAware.getCurrentAuditor();
 
 		// Assert
-		assertFalse(result.isPresent()); // ✅ correct expectation now
+		assertFalse(result.isPresent()); //  correct expectation now
 	}
 
 	@Test
@@ -157,7 +157,7 @@ class AuditorAwareImplTest {
 	@Test
 	void shouldReturnEmpty_whenAuthIsNull() {
 		// Arrange
-		SecurityContextHolder.clearContext(); // ✅ important: ensures auth is truly null
+		SecurityContextHolder.clearContext(); //  important: ensures auth is truly null
 
 		// Act
 		Optional<Long> result = auditorAware.getCurrentAuditor();

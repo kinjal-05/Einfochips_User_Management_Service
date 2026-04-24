@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DisplayName("App (Spring Boot Main Class) Tests")
 class AppTest {
 
-	// ✅ 1. CONTEXT LOAD TEST
+	// 1. CONTEXT LOAD TEST
 	@Test
 	@DisplayName("Application context should load successfully")
 	void contextLoads() {
@@ -21,7 +21,7 @@ class AppTest {
 
 
 
-	// ✅ 3. MAIN METHOD WITH ARGUMENTS
+	// 3. MAIN METHOD WITH ARGUMENTS
 	@Test
 	@DisplayName("Main method should run with arguments")
 	void main_WithArguments_ShouldRun() {

@@ -51,7 +51,7 @@ public class SecurityConfig {
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 				)
 				.authorizeHttpRequests(auth -> auth
-						// ✅ Public endpoints
+						// Public endpoints
 						.requestMatchers(
 								"/api/v1/users/login",
 								"/api/v1/users/register",
@@ -60,7 +60,7 @@ public class SecurityConfig {
 								"/swagger-ui.html"
 						).permitAll()
 
-						// ✅ Everything else secured
+						//  Everything else secured
 						.anyRequest().authenticated()
 				)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

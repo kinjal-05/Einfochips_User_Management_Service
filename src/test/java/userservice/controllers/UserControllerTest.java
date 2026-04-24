@@ -79,10 +79,10 @@ class UserControllerTest {
 	private PasswordEncoder passwordEncoder;
 
 	@MockBean
-	private JwtService jwtService; // ✅ safety
+	private JwtService jwtService;
 
 	@MockBean
-	private CustomUserDetailsService customUserDetailsService; // ✅ safety
+	private CustomUserDetailsService customUserDetailsService;
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -125,7 +125,7 @@ class UserControllerTest {
 					.andExpect(jsonPath("$.data.role").value(Role.ROLE_USER.name()));
 		}
 
-		// ✅ 2. VALIDATION FAILURE (@Valid)
+		//  2. VALIDATION FAILURE (@Valid)
 		@Test
 		void createUser_ShouldReturnBadRequest_WhenValidationFails() throws Exception {
 
@@ -142,7 +142,7 @@ class UserControllerTest {
 			Mockito.verifyNoInteractions(userService);
 		}
 
-		// ✅ 3. SERVICE THROWS EXCEPTION
+		// 3. SERVICE THROWS EXCEPTION
 		@Test
 		void createUser_ShouldReturnInternalServerError_WhenServiceFails() throws Exception {
 
@@ -160,7 +160,7 @@ class UserControllerTest {
 					.andExpect(status().isInternalServerError());
 		}
 
-		// ✅ 4. MALFORMED JSON INPUT
+		// 4. MALFORMED JSON INPUT
 		@Test
 		void createUser_ShouldReturnBadRequest_WhenMalformedJson() throws Exception {
 
@@ -181,7 +181,7 @@ class UserControllerTest {
 
 		private static final String LOGIN_URL = "/api/v1/users/login";
 
-		// ✅ 1. SUCCESS
+		// 1. SUCCESS
 		@Test
 		void login_ShouldReturnSuccess() throws Exception {
 
@@ -213,7 +213,7 @@ class UserControllerTest {
 					.andExpect(jsonPath("$.data.message").value("Login successful"));
 		}
 
-		// ❌ 2. VALIDATION FAILURE
+		// 2. VALIDATION FAILURE
 		@Test
 		void login_ShouldReturnBadRequest_WhenValidationFails() throws Exception {
 
@@ -227,7 +227,7 @@ class UserControllerTest {
 			verifyNoInteractions(userService);
 		}
 
-		// ❌ 3. BAD CREDENTIALS → 401
+		// 3. BAD CREDENTIALS → 401
 		@Test
 		void login_ShouldReturnUnauthorized_WhenBadCredentials() throws Exception {
 
@@ -245,7 +245,7 @@ class UserControllerTest {
 					.andExpect(status().isUnauthorized());
 		}
 
-		// ❌ 4. GENERIC ERROR → 500
+		// 4. GENERIC ERROR → 500
 		@Test
 		void login_ShouldReturnInternalServerError_WhenServiceFails() throws Exception {
 
@@ -263,7 +263,7 @@ class UserControllerTest {
 					.andExpect(status().isInternalServerError());
 		}
 
-		// ❌ 5. MALFORMED JSON
+		// 5. MALFORMED JSON
 		@Test
 		void login_ShouldReturnBadRequest_WhenMalformedJson() throws Exception {
 
@@ -284,7 +284,7 @@ class UserControllerTest {
 
 		private static final String SEARCH_URL = "/api/v1/users/search";
 
-		// ✅ 1. SUCCESS WITH ALL FILTERS
+		// 1. SUCCESS WITH ALL FILTERS
 		@Test
 		void searchUsers_ShouldReturnUsers_WhenAllParamsProvided() throws Exception {
 
@@ -320,7 +320,7 @@ class UserControllerTest {
 
 
 
-		// ❌ 3. INVALID ROLE ENUM → 400
+		// 3. INVALID ROLE ENUM → 400
 		@Test
 		void searchUsers_ShouldReturnBadRequest_WhenInvalidRole() throws Exception {
 
@@ -331,7 +331,7 @@ class UserControllerTest {
 			verifyNoInteractions(userService);
 		}
 
-		// ❌ 4. INVALID DATE FORMAT → 400
+		// 4. INVALID DATE FORMAT → 400
 		@Test
 		void searchUsers_ShouldReturnBadRequest_WhenInvalidDate() throws Exception {
 
@@ -342,7 +342,7 @@ class UserControllerTest {
 			verifyNoInteractions(userService);
 		}
 
-		// ❌ 5. SERVICE EXCEPTION → 500
+		// 5. SERVICE EXCEPTION → 500
 		@Test
 		void searchUsers_ShouldReturnInternalServerError_WhenServiceFails() throws Exception {
 
@@ -365,7 +365,7 @@ class UserControllerTest {
 
 		private static final String UPDATE_URL = "/api/v1/users/updateUser/";
 
-		// ✅ 1. SUCCESS
+		// 1. SUCCESS
 		@Test
 		void updateUser_ShouldReturnUpdatedUser() throws Exception {
 
@@ -398,7 +398,7 @@ class UserControllerTest {
 					.andExpect(jsonPath("$.data.role").value(Role.ROLE_ADMIN.name()));
 		}
 
-		// ❌ 2. USER NOT FOUND → 404
+		// 2. USER NOT FOUND → 404
 		@Test
 		void updateUser_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
 
@@ -418,7 +418,7 @@ class UserControllerTest {
 					.andExpect(status().isNotFound());
 		}
 
-		// ❌ 3. INVALID REQUEST BODY (if validation exists)
+		// 3. INVALID REQUEST BODY (if validation exists)
 		@Test
 		void updateUser_ShouldReturnBadRequest_WhenInvalidInput() throws Exception {
 
@@ -437,7 +437,7 @@ class UserControllerTest {
 
 		}
 
-		// ❌ 4. SERVICE EXCEPTION → 500
+		// 4. SERVICE EXCEPTION → 500
 		@Test
 		void updateUser_ShouldReturnInternalServerError_WhenServiceFails() throws Exception {
 
@@ -457,7 +457,7 @@ class UserControllerTest {
 					.andExpect(status().isInternalServerError());
 		}
 
-		// ❌ 5. MALFORMED JSON
+		//  5. MALFORMED JSON
 		@Test
 		void updateUser_ShouldReturnBadRequest_WhenMalformedJson() throws Exception {
 
@@ -480,7 +480,7 @@ class UserControllerTest {
 
 		private static final String GET_BY_ID_URL = "/api/v1/users/getById/";
 
-		// ✅ 1. SUCCESS
+		// 1. SUCCESS
 		@Test
 		void getUserById_ShouldReturnUser() throws Exception {
 
@@ -506,7 +506,7 @@ class UserControllerTest {
 					.andExpect(jsonPath("$.data.role").value(Role.ROLE_USER.name()));
 		}
 
-		// ❌ 2. USER NOT FOUND → 404
+		// 2. USER NOT FOUND → 404
 		@Test
 		void getUserById_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
 
@@ -519,7 +519,7 @@ class UserControllerTest {
 					.andExpect(status().isNotFound());
 		}
 
-		// ❌ 3. INVALID PATH VARIABLE → 400
+		// 3. INVALID PATH VARIABLE → 400
 		@Test
 		void getUserById_ShouldReturnBadRequest_WhenInvalidId() throws Exception {
 
@@ -529,7 +529,7 @@ class UserControllerTest {
 			verifyNoInteractions(userService);
 		}
 
-		// ❌ 4. SERVICE EXCEPTION → 500
+		//  4. SERVICE EXCEPTION → 500
 		@Test
 		void getUserById_ShouldReturnInternalServerError_WhenServiceFails() throws Exception {
 
@@ -549,7 +549,7 @@ class UserControllerTest {
 
 		private static final String DELETE_URL = "/api/v1/users/deleteUser/";
 
-		// ✅ 1. SUCCESS
+		// 1. SUCCESS
 		@Test
 		void deleteUser_ShouldReturnSuccess() throws Exception {
 
@@ -565,7 +565,7 @@ class UserControllerTest {
 			verify(userService).softDeleteUser(userId);
 		}
 
-		// ❌ 2. USER NOT FOUND → 404
+		//2. USER NOT FOUND → 404
 		@Test
 		void deleteUser_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
 
@@ -578,7 +578,7 @@ class UserControllerTest {
 					.andExpect(status().isNotFound());
 		}
 
-		// ❌ 3. INVALID ID → 400
+		// 3. INVALID ID → 400
 		@Test
 		void deleteUser_ShouldReturnBadRequest_WhenInvalidId() throws Exception {
 
@@ -588,7 +588,7 @@ class UserControllerTest {
 			verifyNoInteractions(userService);
 		}
 
-		// ❌ 4. SERVICE FAILURE → 500
+		// 4. SERVICE FAILURE → 500
 		@Test
 		void deleteUser_ShouldReturnInternalServerError_WhenServiceFails() throws Exception {
 
@@ -608,7 +608,7 @@ class UserControllerTest {
 
 		private static final String CHANGE_PASSWORD_URL = "/api/v1/users/changePassword";
 
-		// ✅ 1. SUCCESS
+		// 1. SUCCESS
 		@Test
 		void changePassword_ShouldReturnSuccess() throws Exception {
 
@@ -628,7 +628,7 @@ class UserControllerTest {
 			verify(userService).changePassword(any(ChangePasswordRequestDTO.class));
 		}
 
-		// ❌ 2. VALIDATION FAILURE
+		// 2. VALIDATION FAILURE
 		@Test
 		void changePassword_ShouldReturnBadRequest_WhenValidationFails() throws Exception {
 
@@ -645,7 +645,7 @@ class UserControllerTest {
 			verifyNoInteractions(userService);
 		}
 
-		// ❌ 3. BAD CREDENTIALS → 401
+		//  3. BAD CREDENTIALS → 401
 		@Test
 		void changePassword_ShouldReturnUnauthorized_WhenWrongPassword() throws Exception {
 
@@ -663,7 +663,7 @@ class UserControllerTest {
 					.andExpect(status().isUnauthorized());
 		}
 
-		// ❌ 4. USER NOT FOUND → 404
+		// 4. USER NOT FOUND → 404
 		@Test
 		void changePassword_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
 
@@ -681,7 +681,7 @@ class UserControllerTest {
 					.andExpect(status().isNotFound());
 		}
 
-		// ❌ 5. SERVICE FAILURE → 500
+		//  5. SERVICE FAILURE → 500
 		@Test
 		void changePassword_ShouldReturnInternalServerError_WhenServiceFails() throws Exception {
 
@@ -699,7 +699,7 @@ class UserControllerTest {
 					.andExpect(status().isInternalServerError());
 		}
 
-		// ❌ 6. MALFORMED JSON
+		//  6. MALFORMED JSON
 		@Test
 		void changePassword_ShouldReturnBadRequest_WhenMalformedJson() throws Exception {
 
