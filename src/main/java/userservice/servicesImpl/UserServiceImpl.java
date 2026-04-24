@@ -33,6 +33,17 @@
 		private final AuthenticationManager authenticationManager;
 		private final JwtService jwtService;
 
+	/**
+	 * Creates a new user with a default temporary password.
+	 *
+	 * Transactional Behavior:
+	 * - Runs within a transaction to ensure user creation is atomic.
+	 * - If any failure occurs during save, the transaction is rolled back.
+	 *
+	 * Notes:
+	 * - Password is encoded before persisting.
+	 * - Soft delete flag is initialized as false.
+	 */
 		@Override
 		@Transactional
 		public UserResponseDTO createUser(UserRequestDTO request) {
@@ -47,6 +58,18 @@
 			return mapToUserResponseDTO(savedUser);
 		}
 
+	/**
+	 * Authenticates user credentials and generates JWT token.
+	 *
+	 * Flow:
+	 * - Delegates authentication to AuthenticationManager.
+	 * - On success, extracts authenticated user details.
+	 * - Generates JWT token for stateless authentication.
+	 *
+	 * Security:
+	 * - Throws BadCredentialsException if authentication fails.
+	 * - No transaction required (read + auth operation only).
+	 */
 		@Override
 		public LoginResponseDTO login(LoginRequestDTO request) {
 			Authentication authentication = authenticationManager.authenticate(
@@ -69,6 +92,17 @@
 			);
 		}
 
+	/**
+	 * Searches users based on dynamic filtering criteria.
+	 *
+	 * Transactional Behavior:
+	 * - Read-only transaction for performance optimization.
+	 * - Prevents accidental writes and reduces DB overhead.
+	 *
+	 * Notes:
+	 * - Uses JPA Specification for flexible filtering.
+	 * - Supports pagination via Pageable.
+	 */
 		@Override
 		@Transactional(readOnly = true)
 		public Page<UserResponseDTO> searchUsers(UserSearchRequestDTO request, Pageable pageable) {
@@ -84,6 +118,17 @@
 			return usersPage.map(this::mapToUserResponseDTO);
 		}
 
+	/**
+	 * Updates user details.
+	 *
+	 * Transactional Behavior:
+	 * - Uses READ_COMMITTED isolation to ensure only committed data is read.
+	 * - Timeout ensures long-running transactions are aborted.
+	 *
+	 * Notes:
+	 * - Currently fetches and re-saves user without modification (extend as needed).
+	 * - Prevents dirty reads but allows non-repeatable reads.
+	 */
 		@Override
 		@Transactional(
 				isolation = Isolation.READ_COMMITTED,
@@ -95,6 +140,15 @@
 			return mapToUserResponseDTO(updatedUser);
 		}
 
+	/**
+	 * Fetches a user by ID.
+	 *
+	 * Transactional Behavior:
+	 * - Read-only transaction ensures no accidental modifications.
+	 *
+	 * Notes:
+	 * - Only active (non-deleted) users are returned.
+	 */
 		@Override
 		@Transactional(readOnly = true)
 		public UserResponseDTO getUserById(long id) {
@@ -102,6 +156,15 @@
 			return mapToUserResponseDTO(user);
 		}
 
+	/**
+	 * Performs soft delete on a user.
+	 *
+	 * Transactional Behavior:
+	 * - Wrapped in transaction to ensure delete operation consistency.
+	 *
+	 * Notes:
+	 * - Uses @SQLDelete (Hibernate) to mark user as deleted instead of physical deletion.
+	 */
 		@Override
 		@Transactional
 		public void softDeleteUser(long id) {
@@ -109,8 +172,23 @@
 			userRepository.delete(user);
 		}
 
+	/**
+	 * Changes the password of the currently authenticated user.
+	 *
+	 * Transactional Behavior:
+	 * - Uses READ_COMMITTED isolation to avoid dirty reads.
+	 * - Rolls back for any exception to maintain data consistency.
+	 *
+	 * Flow:
+	 * - Fetch authenticated user from security context.
+	 * - Validate old password.
+	 * - Encode and update new password.
+	 *
+	 * Security:
+	 * - Prevents password update if old password is incorrect.
+	 */
 		@Override
-		@Transactional(rollbackFor = Exception.class)
+		@Transactional(rollbackFor = Exception.class,isolation = Isolation.READ_COMMITTED)
 		public void changePassword(ChangePasswordRequestDTO request) {
 			String loggedInEmail = getCurrentUserEmail();
 			User user = userRepository.findByEmail(loggedInEmail)
@@ -126,6 +204,13 @@
 			log.info("Coming After Save in Repo");
 		}
 
+	/**
+	 * Retrieves the currently authenticated user's email from SecurityContext.
+	 *
+	 * Security:
+	 * - Ensures user is authenticated before accessing context.
+	 * - Throws exception for anonymous or unauthenticated access.
+	 */
 		private String getCurrentUserEmail() {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			if (auth == null || !auth.isAuthenticated()
@@ -135,6 +220,12 @@
 			return auth.getName();
 		}
 
+	/**
+	 * Maps User entity to UserResponseDTO.
+	 *
+	 * Purpose:
+	 * - Separates persistence model from API response model.
+	 */
 		private UserResponseDTO mapToUserResponseDTO(User user) {
 			return new UserResponseDTO(
 					user.getId(),
@@ -147,6 +238,13 @@
 			);
 		}
 
+	/**
+	 * Fetches an active user or throws exception if not found.
+	 *
+	 * Notes:
+	 * - Ensures soft-deleted users are not returned.
+	 * - Centralized validation method to avoid duplication.
+	 */
 		private User getUserOrThrow(long id) {
 			return userRepository.findActiveById(id)
 					.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
