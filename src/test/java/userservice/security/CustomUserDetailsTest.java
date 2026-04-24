@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.test.context.ActiveProfiles;
 import userservice.enums.Role;
 import userservice.models.User;
 
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *  8.  isEnabled()                — false when user.isDeleted() = true
  *  9.  getUser()  (@Getter)       — returns the wrapped User
  */
+@ActiveProfiles("test")
 class CustomUserDetailsTest {
 
 	// ── helper ────────────────────────────────────────────────────────────────

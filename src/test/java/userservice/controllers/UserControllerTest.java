@@ -64,6 +64,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 				org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
 		}
 )
+@ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 @DisplayName("UserController - Full Coverage Test Suite")
 class UserControllerTest {

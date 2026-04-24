@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.context.ActiveProfiles;
 import userservice.models.User;
 import userservice.repositories.UserRepository;
 
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.when;
  *  2. User not found → throws UsernameNotFoundException with correct message
  */
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 class CustomUserDetailsServiceTest {
 
 	@Mock

@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import userservice.enums.Role;
 import userservice.models.User;
@@ -50,6 +51,7 @@ import static org.mockito.Mockito.when;
  *  11. isTokenExpired           — expired     (covered via isTokenValid false)
  */
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 class JwtServiceTest {
 
 	// A 256-bit Base64-encoded secret (32 bytes) — safe for HS256
