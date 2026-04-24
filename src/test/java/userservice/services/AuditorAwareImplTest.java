@@ -12,7 +12,6 @@ import org.springframework.test.context.ActiveProfiles;
 import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.security.CustomUserDetails;
-import userservice.servicesImpl.AuditorAwareImpl;
 
 import java.util.Optional;
 

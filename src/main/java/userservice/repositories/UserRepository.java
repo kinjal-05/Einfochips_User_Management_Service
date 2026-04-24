@@ -3,6 +3,7 @@ package userservice.repositories;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Modifying;
 import userservice.dtos.UserEmailRoleProjection;
 import userservice.models.User;
 
@@ -59,4 +60,8 @@ public interface UserRepository extends JpaRepository<User, Long>,
 	// Email exists check — active users only
 	@Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.isDeleted = false")
 	boolean existsByEmail(@Param("email") String email);
+
+	@Modifying
+	@Query("UPDATE User u SET u.isDeleted = true, u.deletedTimestamp = CURRENT_TIMESTAMP WHERE u.id = :id")
+	int delete(@Param("id") long id);
 }
