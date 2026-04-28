@@ -1,5 +1,12 @@
 package userservice.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -10,22 +17,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
+
 import userservice.models.User;
 import userservice.repositories.UserRepository;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link CustomUserDetailsService}.
  *
- * Branches covered:
- *  1. User found     → returns CustomUserDetails wrapping the User
- *  2. User not found → throws UsernameNotFoundException with correct message
+ * Branches covered: 1. User found → returns CustomUserDetails wrapping the User
+ * 2. User not found → throws UsernameNotFoundException with correct message
  */
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -37,16 +37,34 @@ class CustomUserDetailsServiceTest {
 	@InjectMocks
 	private CustomUserDetailsService customUserDetailsService;
 
-	private static final String EMAIL       = "kinjal@example.com";
-	private static final String UNKNOWN     = "ghost@example.com";
+	private static final String EMAIL = "kinjal@example.com";
+	private static final String UNKNOWN = "ghost@example.com";
 
-	// =========================================================================
-	// Branch 1 — user exists
-	// =========================================================================
+	/**
+	 * Test suite validating successful user lookup behavior in
+	 * {@code loadUserByUsername()}.
+	 *
+	 * <p>
+	 * Ensures that when a matching user exists, the service returns a fully
+	 * populated {@link CustomUserDetails} object.
+	 */
 	@Nested
 	@DisplayName("loadUserByUsername — user found")
 	class UserFoundTests {
 
+		/**
+		 * Verifies that an existing user is wrapped inside {@link CustomUserDetails}
+		 * and returned successfully.
+		 *
+		 * <p>
+		 * Expected behavior:
+		 * <ul>
+		 * <li>Repository finds user by email</li>
+		 * <li>Returned object is CustomUserDetails</li>
+		 * <li>Wrapped User instance matches repository result</li>
+		 * <li>Username equals supplied email</li>
+		 * </ul>
+		 */
 		@Test
 		@DisplayName("returns CustomUserDetails wrapping the found User")
 		void userFound_returnsCustomUserDetails() {
@@ -70,22 +88,36 @@ class CustomUserDetailsServiceTest {
 		}
 	}
 
-	// =========================================================================
-	// Branch 2 — user not found
-	// =========================================================================
+	/**
+	 * Test suite validating failure behavior when user lookup does not return a
+	 * match.
+	 *
+	 * <p>
+	 * Ensures Spring Security receives a proper {@link UsernameNotFoundException}.
+	 */
 	@Nested
 	@DisplayName("loadUserByUsername — user not found")
 	class UserNotFoundTests {
 
+		/**
+		 * Verifies that an unknown email triggers {@link UsernameNotFoundException}
+		 * with a descriptive message.
+		 *
+		 * <p>
+		 * Expected behavior:
+		 * <ul>
+		 * <li>Repository returns empty result</li>
+		 * <li>Exception type is UsernameNotFoundException</li>
+		 * <li>Error message contains requested username/email</li>
+		 * </ul>
+		 */
 		@Test
 		@DisplayName("throws UsernameNotFoundException with descriptive message")
 		void userNotFound_throwsUsernameNotFoundException() {
 			when(userRepository.findByEmail(UNKNOWN)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() ->
-					customUserDetailsService.loadUserByUsername(UNKNOWN))
-					.isInstanceOf(UsernameNotFoundException.class)
-					.hasMessageContaining(UNKNOWN);
+			assertThatThrownBy(() -> customUserDetailsService.loadUserByUsername(UNKNOWN))
+					.isInstanceOf(UsernameNotFoundException.class).hasMessageContaining(UNKNOWN);
 
 			verify(userRepository).findByEmail(UNKNOWN);
 		}
