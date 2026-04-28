@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserResponseDTO;
 import userservice.dtos.UserUpdateRequestDTO;
 import userservice.models.User;
@@ -42,7 +41,7 @@ import userservice.utility.MapToUserResponseDTO;
  */
 @Service
 @RequiredArgsConstructor
-public class UserUpdateServiceImpl extends BaseLogger implements UserUpdateService {
+public class UserUpdateServiceImpl implements UserUpdateService {
 	private final UserRepository userRepository;
 	private final GetActiveUser getActiveUser;
 	private final MapToUserResponseDTO mapToUserResponseDTO;

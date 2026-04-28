@@ -24,7 +24,7 @@ import userservice.models.User;
  * </p>
  */
 
-public class UserSpecification extends BaseLogger {
+public class UserSpecification {
 
 	private UserSpecification() {
 	}

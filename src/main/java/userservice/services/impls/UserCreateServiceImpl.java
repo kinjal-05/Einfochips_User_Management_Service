@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserRequestDTO;
 import userservice.dtos.UserResponseDTO;
 import userservice.models.User;
@@ -45,7 +44,7 @@ import userservice.utility.MapToUserResponseDTO;
  */
 @Service
 @RequiredArgsConstructor
-public class UserCreateServiceImpl extends BaseLogger implements UserCreateService {
+public class UserCreateServiceImpl implements UserCreateService {
 
 	/**
 	 * Password encoder used for secure password hashing.

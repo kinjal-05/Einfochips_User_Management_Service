@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserApiResponse;
 import userservice.dtos.UserLoginRequestDTO;
 import userservice.dtos.UserLoginResponseDTO;
@@ -31,7 +30,7 @@ import userservice.services.UserLoginService;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserLoginController extends BaseLogger {
+public class UserLoginController {
 	private final UserLoginService loginUserService;
 
 	/**
@@ -51,7 +50,6 @@ public class UserLoginController extends BaseLogger {
 	public ResponseEntity<UserApiResponse<UserLoginResponseDTO>> login(
 			@Valid @RequestBody UserLoginRequestDTO request) {
 
-		log.info("{}", "Enter in Login Controller");
 		UserLoginResponseDTO response = loginUserService.login(request);
 
 		return ResponseEntity.status(HttpStatus.OK).body(UserApiResponse.success(response, "Login successful"));

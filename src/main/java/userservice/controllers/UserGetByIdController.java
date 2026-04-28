@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserApiResponse;
 import userservice.dtos.UserResponseDTO;
 import userservice.services.UserGetByIdService;
@@ -29,7 +28,7 @@ import userservice.services.UserGetByIdService;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserGetByIdController extends BaseLogger {
+public class UserGetByIdController {
 	private final UserGetByIdService getUserByIdService;
 
 	/**

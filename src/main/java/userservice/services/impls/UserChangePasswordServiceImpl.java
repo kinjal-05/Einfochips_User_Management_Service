@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserChangePasswordRequestDTO;
 import userservice.exceptions.ResourceNotFoundException;
 import userservice.models.User;
@@ -17,7 +16,7 @@ import userservice.services.UserChangePasswordService;
 
 @Service
 @RequiredArgsConstructor
-public class UserChangePasswordServiceImpl extends BaseLogger implements UserChangePasswordService {
+public class UserChangePasswordServiceImpl implements UserChangePasswordService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
@@ -45,7 +44,7 @@ public class UserChangePasswordServiceImpl extends BaseLogger implements UserCha
 		user.setPassword(passwordEncoder.encode(request.newPassword()));
 
 		userRepository.save(user);
-		log.info("Coming After Save in Repo");
+
 	}
 
 	/**

@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserApiResponse;
 import userservice.dtos.UserChangePasswordRequestDTO;
 import userservice.services.UserChangePasswordService;
@@ -30,7 +29,7 @@ import userservice.services.UserChangePasswordService;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserChangePasswordController extends BaseLogger {
+public class UserChangePasswordController {
 	private final UserChangePasswordService changePasswordService;
 
 	/**

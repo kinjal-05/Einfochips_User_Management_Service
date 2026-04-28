@@ -15,7 +15,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * JWT authentication filter responsible for validating incoming JSON Web Tokens
@@ -51,7 +50,6 @@ import lombok.extern.slf4j.Slf4j;
  * @version 1.0
  * @since 1.0
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -64,7 +62,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			@NonNull FilterChain filterChain) throws ServletException, IOException {
 
 		final String requestPath = request.getServletPath();
-		log.info("=== JwtAuthenticationFilter: path={}", requestPath);
 
 		/*
 		 * FIX: Skip JWT validation for public endpoints.
@@ -82,7 +79,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		 * JWT processing.
 		 */
 		if (isPublicEndpoint(requestPath)) {
-			log.info("=== Skipping JWT filter for public endpoint: {}", requestPath);
 			filterChain.doFilter(request, response);
 			return;
 		}
@@ -93,7 +89,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		// No token present — pass to next filter
 		// Spring Security will reject unauthenticated access to secured endpoints
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			log.info("=== No JWT token found for path: {}", requestPath);
 			filterChain.doFilter(request, response);
 			return;
 		}
@@ -105,7 +100,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		try {
 			userEmail = jwtService.extractUsername(jwt);
 		} catch (Exception e) {
-			log.error("=== Failed to extract username from JWT: {}", e.getMessage());
 			filterChain.doFilter(request, response);
 			return;
 		}
@@ -120,9 +114,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 						null, userDetails.getAuthorities());
 				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 				SecurityContextHolder.getContext().setAuthentication(authToken);
-				log.info("=== JWT valid — authenticated user: {}", userEmail);
 			} else {
-				log.warn("=== JWT invalid for user: {}", userEmail);
+
 			}
 		}
 

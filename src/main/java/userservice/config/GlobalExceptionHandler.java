@@ -65,7 +65,7 @@ import userservice.exceptions.ResourceNotFoundException;
  * </p>
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler extends BaseLogger {
+public class GlobalExceptionHandler {
 
 	/**
 	 * Handles validation failures triggered by @Valid or @Validated annotations in

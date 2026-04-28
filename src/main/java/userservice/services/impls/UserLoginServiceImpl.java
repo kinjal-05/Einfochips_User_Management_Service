@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserLoginRequestDTO;
 import userservice.dtos.UserLoginResponseDTO;
 import userservice.models.User;
@@ -17,7 +16,7 @@ import userservice.services.UserLoginService;
 
 @Service
 @RequiredArgsConstructor
-public class UserLoginServiceImpl extends BaseLogger implements UserLoginService {
+public class UserLoginServiceImpl implements UserLoginService {
 	private final JwtService jwtService;
 	private final AuthenticationManager authenticationManager;
 
@@ -39,7 +38,6 @@ public class UserLoginServiceImpl extends BaseLogger implements UserLoginService
 		CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
 		String token = jwtService.generateToken(customUserDetails);
 		User user = customUserDetails.getUser();
-		log.info("{}", user);
 		return new UserLoginResponseDTO(user.getId(), user.getEmail(), user.getRole(), token, "Login Successful");
 	}
 }

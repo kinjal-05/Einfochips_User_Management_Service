@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserApiResponse;
 import userservice.services.UserSoftDeleteService;
 
@@ -28,7 +27,7 @@ import userservice.services.UserSoftDeleteService;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserSoftDeleteController extends BaseLogger {
+public class UserSoftDeleteController {
 	private final UserSoftDeleteService softDeleteUserService;
 
 	/**

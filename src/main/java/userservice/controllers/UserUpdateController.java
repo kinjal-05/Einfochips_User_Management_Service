@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserApiResponse;
 import userservice.dtos.UserResponseDTO;
 import userservice.dtos.UserUpdateRequestDTO;
@@ -31,7 +30,7 @@ import userservice.services.UserUpdateService;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserUpdateController extends BaseLogger {
+public class UserUpdateController {
 	private final UserUpdateService updateUserService;
 
 	/**

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.config.UserSpecification;
 import userservice.dtos.UserResponseDTO;
 import userservice.dtos.UserSearchRequestDTO;
@@ -49,7 +48,7 @@ import userservice.utility.MapToUserResponseDTO;
  */
 @Service
 @RequiredArgsConstructor
-public class UserSearchServiceImpl extends BaseLogger implements UserSearchService {
+public class UserSearchServiceImpl implements UserSearchService {
 	private final UserRepository userRepository;
 	private final MapToUserResponseDTO mapToUserResponseDTO;
 

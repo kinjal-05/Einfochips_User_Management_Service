@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.models.User;
 import userservice.repositories.UserRepository;
 import userservice.services.UserSoftDeleteService;
@@ -50,7 +49,7 @@ import userservice.utility.GetActiveUser;
  */
 @Service
 @RequiredArgsConstructor
-public class UserSoftDeleteServiceImpl extends BaseLogger implements UserSoftDeleteService {
+public class UserSoftDeleteServiceImpl implements UserSoftDeleteService {
 	private final UserRepository userRepository;
 	private final GetActiveUser getActiveUser;
 

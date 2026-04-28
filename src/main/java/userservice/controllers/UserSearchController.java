@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import userservice.config.BaseLogger;
 import userservice.dtos.UserApiResponse;
 import userservice.dtos.UserResponseDTO;
 import userservice.dtos.UserSearchRequestDTO;
@@ -36,7 +35,7 @@ import userservice.services.UserSearchService;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserSearchController extends BaseLogger {
+public class UserSearchController {
 	private final UserSearchService searchUserService;
 
 	/**
@@ -59,11 +58,9 @@ public class UserSearchController extends BaseLogger {
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
 			Pageable pageable) {
 
-		log.info("Enter in Controller Part");
-		log.info("Params: email={}, role={}, createdById={}, updatedById={}", email, role, createdById, updatedById);
 		UserSearchRequestDTO request = new UserSearchRequestDTO(email, role, createdById, updatedById, fromDate,
 				toDate);
-		log.info("{}", request);
+
 		Page<UserResponseDTO> response = searchUserService.searchUsers(request, pageable);
 
 		return ResponseEntity.status(HttpStatus.OK)
