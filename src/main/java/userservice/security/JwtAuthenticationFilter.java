@@ -1,11 +1,7 @@
 package userservice.security;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,9 +10,46 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
-@Slf4j
+/**
+ * JWT authentication filter responsible for validating incoming JSON Web Tokens
+ * and establishing authenticated user sessions in the Spring Security context.
+ *
+ * <p>
+ * This filter executes once per HTTP request and performs the following:
+ * <ul>
+ * <li>Skips authentication for publicly accessible endpoints</li>
+ * <li>Extracts JWT token from the Authorization header</li>
+ * <li>Validates token integrity and expiration</li>
+ * <li>Loads user details associated with the token</li>
+ * <li>Creates and stores authentication object in SecurityContext</li>
+ * </ul>
+ *
+ * <p>
+ * Expected Authorization header format:
+ * 
+ * <pre>
+ * Authorization: Bearer &lt;jwt-token&gt;
+ * </pre>
+ *
+ * <p>
+ * If the token is missing or invalid, the request continues through the filter
+ * chain without authentication. Access decisions are then handled by Spring
+ * Security configuration.
+ *
+ * <p>
+ * This class extends {@link OncePerRequestFilter} to ensure execution only once
+ * per request lifecycle.
+ *
+ * @author Kinjal Mistry
+ * @version 1.0
+ * @since 1.0
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -25,34 +58,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final CustomUserDetailsService customUserDetailsService;
 
 	@Override
-	protected void doFilterInternal(
-			@NonNull HttpServletRequest request,
-			@NonNull HttpServletResponse response,
-			@NonNull FilterChain filterChain
-	) throws ServletException, IOException {
+	protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+			@NonNull FilterChain filterChain) throws ServletException, IOException {
 
 		final String requestPath = request.getServletPath();
-		log.info("=== JwtAuthenticationFilter: path={}", requestPath);
 
 		/*
 		 * FIX: Skip JWT validation for public endpoints.
 		 *
-		 * ROOT CAUSE OF DOUBLE QUERY:
-		 * JwtAuthenticationFilter was processing ALL requests including /login.
-		 * For /login request:
-		 *   - Filter runs → no JWT token → tries to load user anyway
-		 *   - First Hibernate query fires (from filter)
-		 *   - Then authenticationManager.authenticate() fires
-		 *   - Second Hibernate query fires (from DaoAuthenticationProvider)
+		 * ROOT CAUSE OF DOUBLE QUERY: JwtAuthenticationFilter was processing ALL
+		 * requests including /login. For /login request: - Filter runs → no JWT token →
+		 * tries to load user anyway - First Hibernate query fires (from filter) - Then
+		 * authenticationManager.authenticate() fires - Second Hibernate query fires
+		 * (from DaoAuthenticationProvider)
 		 *
-		 * Both queries return empty because the filter was corrupting
-		 * the SecurityContext before authentication could complete.
+		 * Both queries return empty because the filter was corrupting the
+		 * SecurityContext before authentication could complete.
 		 *
-		 * FIX: Return early for public endpoints — let them pass through
-		 * without any JWT processing.
+		 * FIX: Return early for public endpoints — let them pass through without any
+		 * JWT processing.
 		 */
 		if (isPublicEndpoint(requestPath)) {
-			log.info("=== Skipping JWT filter for public endpoint: {}", requestPath);
 			filterChain.doFilter(request, response);
 			return;
 		}
@@ -63,7 +89,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		// No token present — pass to next filter
 		// Spring Security will reject unauthenticated access to secured endpoints
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			log.info("=== No JWT token found for path: {}", requestPath);
 			filterChain.doFilter(request, response);
 			return;
 		}
@@ -75,32 +100,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		try {
 			userEmail = jwtService.extractUsername(jwt);
 		} catch (Exception e) {
-			log.error("=== Failed to extract username from JWT: {}", e.getMessage());
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 		// Validate token and set authentication in SecurityContext
-		if (userEmail != null
-				&& SecurityContextHolder.getContext().getAuthentication() == null) {
+		if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-			UserDetails userDetails =
-					customUserDetailsService.loadUserByUsername(userEmail);
+			UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
 
 			if (jwtService.isTokenValid(jwt, userDetails)) {
-				UsernamePasswordAuthenticationToken authToken =
-						new UsernamePasswordAuthenticationToken(
-								userDetails,
-								null,
-								userDetails.getAuthorities()
-						);
-				authToken.setDetails(
-						new WebAuthenticationDetailsSource().buildDetails(request)
-				);
+				UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
+						null, userDetails.getAuthorities());
+				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 				SecurityContextHolder.getContext().setAuthentication(authToken);
-				log.info("=== JWT valid — authenticated user: {}", userEmail);
 			} else {
-				log.warn("=== JWT invalid for user: {}", userEmail);
+
 			}
 		}
 
@@ -108,13 +123,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Returns true for endpoints that do not require JWT authentication.
-	 * These endpoints are skipped by the JWT filter entirely.
+	 * Returns true for endpoints that do not require JWT authentication. These
+	 * endpoints are skipped by the JWT filter entirely.
 	 */
 	private boolean isPublicEndpoint(String path) {
-		return path.startsWith("/api/v1/users/login") ||
-				path.startsWith("/api/v1/users/encode") ||
-				path.startsWith("/swagger-ui") ||
-				path.startsWith("/v3/api-docs");
+		return path.startsWith("/api/v1/users/login") || path.startsWith("/api/v1/users/encode")
+				|| path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs");
 	}
 }

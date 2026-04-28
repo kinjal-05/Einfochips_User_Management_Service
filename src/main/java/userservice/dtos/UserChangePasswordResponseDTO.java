@@ -19,7 +19,7 @@ package userservice.dtos;
  * @param email   Email of the user whose password was changed
  * @param message Status message (e.g., "Password updated successfully")
  */
-public record ChangePasswordResponseDTO(
+public record UserChangePasswordResponseDTO(
 		long userId,
 		String email,
 		String message

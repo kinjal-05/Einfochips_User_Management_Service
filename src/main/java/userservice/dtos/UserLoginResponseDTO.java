@@ -30,7 +30,7 @@ import userservice.enums.Role;
  * @param token   Authentication token (e.g., JWT)
  * @param message Status message (e.g., "Login successful")
  */
-public record LoginResponseDTO(
+public record UserLoginResponseDTO(
 		long id,
 		String email,
 		Role role,

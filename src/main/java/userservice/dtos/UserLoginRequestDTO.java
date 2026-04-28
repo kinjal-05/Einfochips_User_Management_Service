@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotBlank;
  * would reach the service layer with no validation error,
  * so the "400 when blank" tests could never pass.
  */
-public record LoginRequestDTO(
+public record UserLoginRequestDTO(
 
 		@NotBlank(message = "Email is required")
 		@Email(message = "Invalid email format")

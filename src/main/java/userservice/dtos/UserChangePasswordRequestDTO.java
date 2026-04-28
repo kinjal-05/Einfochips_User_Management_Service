@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Size;
  * Without these annotations, passing blank oldPassword/newPassword
  * would reach the service with no error — "400 when blank" tests fail.
  */
-public record ChangePasswordRequestDTO(
+public record UserChangePasswordRequestDTO(
 
 		@NotBlank(message = "Old password is required")
 		String oldPassword,

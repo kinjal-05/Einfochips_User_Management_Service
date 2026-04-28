@@ -1,223 +1,222 @@
 package userservice.config;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Collectors;
 
-import userservice.dtos.ErrorResponse;
-import userservice.exceptions.ResourceNotFoundException;
-
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import userservice.dtos.UserApiResponse;
+import userservice.exceptions.ResourceNotFoundException;
+
 /**
- * Global Exception Handler for the entire application.
+ * Global exception handler for the application.
  *
  * <p>
- * This class centralizes exception handling logic and ensures:
- * - Consistent API error responses
- * - Proper HTTP status codes
- * - Cleaner controller/service code (no try-catch clutter)
+ * This class is annotated with {@code @RestControllerAdvice}, enabling
+ * centralized exception handling across all {@code @RestController} components.
+ * It ensures consistent and structured API error responses using the
+ * {@link userservice.dtos.UserApiResponse} wrapper.
  * </p>
  *
  * <p>
- * NOTE:
- * Spring automatically routes exceptions to the most specific handler.
- * Generic handler (Exception.class) should always be LAST.
+ * The handler intercepts specific exceptions and maps them to appropriate HTTP
+ * status codes along with meaningful error messages.
+ * </p>
+ *
+ * <p>
+ * <b>Handled Exceptions:</b>
+ * </p>
+ * <ul>
+ * <li>{@link org.springframework.web.bind.MethodArgumentNotValidException} -
+ * Triggered during validation failures of request bodies annotated with
+ * {@code @Valid}. Returns {@code 400 BAD REQUEST} with aggregated field-level
+ * error messages.</li>
+ * <li>
+ * {@link org.springframework.security.authentication.BadCredentialsException} -
+ * Triggered when authentication fails due to invalid credentials. Returns
+ * {@code 401 UNAUTHORIZED} with a generic error message.</li>
+ * <li>{@link userservice.exceptions.ResourceNotFoundException} - Thrown when a
+ * requested resource is not found. Returns {@code 404 NOT FOUND} with the
+ * exception message.</li>
+ * <li>{@link java.lang.Exception} - A fallback handler for all unhandled
+ * exceptions. Returns {@code 500 INTERNAL SERVER ERROR} with a generic message.
+ * </li>
+ * </ul>
+ *
+ * <p>
+ * This approach improves maintainability by separating error handling logic
+ * from business logic and ensures a uniform API response structure across the
+ * application.
+ * </p>
+ *
+ * <p>
+ * Note:
+ * <ul>
+ * <li>Avoid exposing sensitive internal error details in production.</li>
+ * <li>Consider adding logging (e.g., using SLF4J) for debugging and monitoring
+ * purposes.</li>
+ * <li>Additional handlers (e.g., for {@code DataIntegrityViolationException})
+ * can be added as needed to handle database-related errors explicitly.</li>
+ * </ul>
  * </p>
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
 	/**
-	 * Handles validation errors triggered by @Valid / @Validated.
+	 * Handles validation failures triggered by @Valid or @Validated annotations in
+	 * controller request bodies or parameters.
 	 *
-	 * Example:
-	 * - Missing email
-	 * - Blank password
-	 * - Invalid request body fields
+	 * <p>
+	 * This method captures {@link MethodArgumentNotValidException} and extracts all
+	 * field-level validation errors from the . Each error is formatted as:
+	 * 
+	 * <pre>
+	 *     fieldName: errorMessage
+	 * </pre>
 	 *
-	 * Returns:
-	 * - HTTP 400 (Bad Request)
-	 * - Field-wise error messages
+	 * <p>
+	 * All field error messages are concatenated into a single comma-separated
+	 * string to provide a concise and user-friendly response.
+	 *
+	 * <p>
+	 * Example response:
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": false,
+	 *   "message": "email: must be a valid email, password: must not be blank",
+	 *   "data": null,
+	 *   "timestamp": "2026-04-24T12:00:00"
+	 * }
+	 * </pre>
+	 *
+	 * @param ex the exception thrown when validation on an argument fails
+	 * @return ResponseEntity containing a standardized ApiResponse with HTTP 400
+	 *         (Bad Request) status and aggregated validation error message
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<Map<String, String>> handleValidation(
-			MethodArgumentNotValidException ex) {
+	public ResponseEntity<UserApiResponse<Object>> handleValidation(MethodArgumentNotValidException ex) {
 
-		Map<String, String> errors = new HashMap<>();
+		String message = ex.getBindingResult().getFieldErrors().stream()
+				.map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining(", "));
 
-		// Extract field-level validation errors
-		ex.getBindingResult().getFieldErrors()
-				.forEach(error ->
-						errors.put(error.getField(), error.getDefaultMessage())
-				);
-
-		return ResponseEntity
-				.status(HttpStatus.BAD_REQUEST)
-				.body(errors);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(UserApiResponse.failure(message));
 	}
 
 	/**
-	 * Handles authentication failures due to invalid credentials.
+	 * Handles authentication failures caused by invalid credentials.
 	 *
-	 * Triggered when:
-	 * - Login with incorrect email/password
-	 * - Incorrect old password during password change
+	 * <p>
+	 * This method captures {@link BadCredentialsException} typically thrown during
+	 * login attempts when the provided email/username or password is incorrect. For
+	 * security reasons, it does not expose specific details about which field
+	 * caused the failure and instead returns a generic error message.
 	 *
-	 * Returns:
-	 * - HTTP 401 (Unauthorized)
+	 * <p>
+	 * This helps prevent user enumeration and protects sensitive authentication
+	 * logic.
+	 *
+	 * <p>
+	 * Example response:
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": false,
+	 *   "message": "Invalid email or password",
+	 *   "data": null,
+	 *   "timestamp": "2026-04-24T12:00:00"
+	 * }
+	 * </pre>
+	 *
+	 * @param ex the exception thrown when authentication fails due to invalid
+	 *           credentials
+	 * @return ResponseEntity containing a standardized ApiResponse with HTTP 401
+	 *         (Unauthorized) status and a generic authentication error message
 	 */
 	@ExceptionHandler(BadCredentialsException.class)
-	public ResponseEntity<ErrorResponse> handleBadCredentials(
-			BadCredentialsException ex) {
+	public ResponseEntity<UserApiResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
 
-		ErrorResponse error = ErrorResponse.builder()
-				.timestamp(LocalDateTime.now())
-				.status(HttpStatus.UNAUTHORIZED.value())
-				.error("Unauthorized")
-				.message(ex.getMessage()) // Avoid exposing sensitive details in production if needed
-				.build();
-
-		return ResponseEntity
-				.status(HttpStatus.UNAUTHORIZED)
-				.body(error);
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(UserApiResponse.failure("Invalid email or password"));
 	}
 
 	/**
-	 * Handles disabled user accounts.
+	 * Handles cases where a requested resource is not found.
 	 *
-	 * Returns:
-	 * - HTTP 401 (Unauthorized)
-	 */
-	@ExceptionHandler(DisabledException.class)
-	public ResponseEntity<ErrorResponse> handleDisabled(DisabledException ex) {
-
-		ErrorResponse error = ErrorResponse.builder()
-				.timestamp(LocalDateTime.now())
-				.status(HttpStatus.UNAUTHORIZED.value())
-				.error("Unauthorized")
-				.message("Account is disabled")
-				.build();
-
-		return ResponseEntity
-				.status(HttpStatus.UNAUTHORIZED)
-				.body(error);
-	}
-
-	/**
-	 * Handles locked user accounts.
+	 * <p>
+	 * This method captures {@link ResourceNotFoundException}, which is typically
+	 * thrown when an entity (e.g., User, Order, etc.) does not exist in the system
+	 * for the given identifier or search criteria.
 	 *
-	 * Returns:
-	 * - HTTP 401 (Unauthorized)
-	 */
-	@ExceptionHandler(LockedException.class)
-	public ResponseEntity<ErrorResponse> handleLocked(LockedException ex) {
-
-		ErrorResponse error = ErrorResponse.builder()
-				.timestamp(LocalDateTime.now())
-				.status(HttpStatus.UNAUTHORIZED.value())
-				.error("Unauthorized")
-				.message("Account is locked")
-				.build();
-
-		return ResponseEntity
-				.status(HttpStatus.UNAUTHORIZED)
-				.body(error);
-	}
-
-	/**
-	 * Handles custom "resource not found" exceptions.
+	 * <p>
+	 * The exception message is returned directly in the response to provide
+	 * meaningful context about what resource was not found.
 	 *
-	 * Example:
-	 * - User not found
-	 * - Record not found in database
+	 * <p>
+	 * Example response:
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": false,
+	 *   "message": "User not found with id: 101",
+	 *   "data": null,
+	 *   "timestamp": "2026-04-24T12:00:00"
+	 * }
+	 * </pre>
 	 *
-	 * Returns:
-	 * - HTTP 404 (Not Found)
+	 * @param ex the exception thrown when a requested resource is not found
+	 * @return ResponseEntity containing a standardized ApiResponse with HTTP 404
+	 *         (Not Found) status and a descriptive error message
 	 */
 	@ExceptionHandler(ResourceNotFoundException.class)
-	public ResponseEntity<ErrorResponse> handleNotFound(
-			ResourceNotFoundException ex) {
+	public ResponseEntity<UserApiResponse<Object>> handleNotFound(ResourceNotFoundException ex) {
 
-		ErrorResponse error = ErrorResponse.builder()
-				.timestamp(LocalDateTime.now())
-				.status(HttpStatus.NOT_FOUND.value())
-				.error("Not Found")
-				.message(ex.getMessage())
-				.build();
-
-		return ResponseEntity
-				.status(HttpStatus.NOT_FOUND)
-				.body(error);
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(UserApiResponse.failure(ex.getMessage()));
 	}
 
 	/**
-	 * Handles database constraint violations.
+	 * Handles all unhandled and unexpected exceptions across the application.
 	 *
-	 * Example:
-	 * - Duplicate email/username
-	 * - Unique constraint violations
+	 * <p>
+	 * This method acts as a global fallback handler for any exception that is not
+	 * explicitly handled by more specific {@code @ExceptionHandler} methods. It
+	 * ensures that the application does not expose internal implementation details
+	 * or sensitive information to the client.
 	 *
-	 * Returns:
-	 * - HTTP 409 (Conflict)
-	 */
-	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
-			DataIntegrityViolationException ex) {
-
-		String message = "Database constraint violation";
-
-		// Extract root cause for better error message
-		String cause = ex.getMostSpecificCause().getMessage();
-		if (cause != null && cause.contains("Duplicate")) {
-			message = "Duplicate value detected. Please use a unique value.";
-		}
-
-		ErrorResponse error = ErrorResponse.builder()
-				.timestamp(LocalDateTime.now())
-				.status(HttpStatus.CONFLICT.value())
-				.error("Conflict")
-				.message(message)
-				.build();
-
-		return ResponseEntity
-				.status(HttpStatus.CONFLICT)
-				.body(error);
-	}
-
-	/**
-	 * Fallback handler for all unhandled exceptions.
+	 * <p>
+	 * Instead of returning the actual exception message, a generic error message is
+	 * sent in the response for security and consistency purposes.
 	 *
-	 * IMPORTANT:
-	 * - Must be the last handler
-	 * - Prevents exposing internal errors to clients
+	 * <p>
+	 * <b>Note:</b> The actual exception should be logged internally (e.g., using a
+	 * logger) for debugging and monitoring, even though it is not exposed to the
+	 * client.
 	 *
-	 * Returns:
-	 * - HTTP 500 (Internal Server Error)
+	 * <p>
+	 * Example response:
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": false,
+	 *   "message": "Something went wrong",
+	 *   "data": null,
+	 *   "timestamp": "2026-04-24T12:00:00"
+	 * }
+	 * </pre>
+	 *
+	 * @param ex the unexpected exception thrown during request processing
+	 * @return ResponseEntity containing a standardized ApiResponse with HTTP 500
+	 *         (Internal Server Error) status and a generic error message
 	 */
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+	public ResponseEntity<UserApiResponse<Object>> handleGeneric(Exception ex) {
 
-		// In production, log the exception (e.g., using Logger)
-		// log.error("Unexpected error occurred", ex);
-
-		ErrorResponse error = ErrorResponse.builder()
-				.timestamp(LocalDateTime.now())
-				.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-				.error("Internal Server Error")
-				.message("Something went wrong")
-				.build();
-
-		return ResponseEntity
-				.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(error);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(UserApiResponse.failure("Something went wrong"));
 	}
 }

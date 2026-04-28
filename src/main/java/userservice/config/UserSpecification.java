@@ -6,51 +6,48 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import jakarta.persistence.criteria.Predicate;
 import userservice.enums.Role;
 import userservice.models.User;
-import jakarta.persistence.criteria.Predicate;
 
 /**
  * Specification class for building dynamic database queries for User entity.
  *
  * <p>
- * This class uses Spring Data JPA Specifications to construct flexible
- * and reusable filtering logic based on optional parameters.
+ * This class uses Spring Data JPA Specifications to construct flexible and
+ * reusable filtering logic based on optional parameters.
  * </p>
  *
  * <p>
- * Benefits:
- * - Avoids writing multiple query methods
- * - Supports dynamic filtering
- * - Improves code maintainability and readability
+ * Benefits: - Avoids writing multiple query methods - Supports dynamic
+ * filtering - Improves code maintainability and readability
  * </p>
  */
+
 public class UserSpecification {
+
+	private UserSpecification() {
+	}
 
 	/**
 	 * Builds a dynamic filter query based on provided parameters.
 	 *
 	 * <p>
-	 * Only non-null parameters are included in the query.
-	 * This allows flexible search functionality without creating multiple APIs.
+	 * Only non-null parameters are included in the query. This allows flexible
+	 * search functionality without creating multiple APIs.
 	 * </p>
 	 *
-	 * @param email        Partial or full email (case-insensitive search)
-	 * @param role         User role (e.g., ADMIN, USER)
-	 * @param createdById  ID of user who created the record
-	 * @param updatedById  ID of user who last updated the record
-	 * @param fromDate     Start date for filtering (createdAt >= fromDate)
-	 * @param toDate       End date for filtering (createdAt <= toDate)
+	 * @param email       Partial or full email (case-insensitive search)
+	 * @param role        User role (e.g., ADMIN, USER)
+	 * @param createdById ID of user who created the record
+	 * @param updatedById ID of user who last updated the record
+	 * @param fromDate    Start date for filtering (createdAt >= fromDate)
+	 * @param toDate      End date for filtering (createdAt <= toDate)
 	 *
 	 * @return Specification<User> dynamic query specification
 	 */
-	public static Specification<User> filterUsers(
-			String email,
-			Role role,
-			Long createdById,
-			Long updatedById,
-			LocalDateTime fromDate,
-			LocalDateTime toDate) {
+	public static Specification<User> filterUsers(String email, Role role, Long createdById, Long updatedById,
+			LocalDateTime fromDate, LocalDateTime toDate) {
 
 		return (root, query, cb) -> {
 
@@ -60,24 +57,19 @@ public class UserSpecification {
 			/**
 			 * Filter by email (case-insensitive, partial match)
 			 *
-			 * Example:
-			 * Input: "kinjal"
-			 * Matches: kinjal@gmail.com, testkinjal@yahoo.com
+			 * Example: Input: "kinjal" Matches: kinjal@gmail.com, testkinjal@yahoo.com
 			 */
+
+			// Always exclude soft-deleted users
+			predicates.add(cb.isFalse(root.get("isDeleted")));
 			if (email != null && !email.trim().isEmpty()) {
-				predicates.add(
-						cb.like(
-								cb.lower(root.get("email")),
-								"%" + email.toLowerCase().trim() + "%"
-						)
-				);
+				predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase().trim() + "%"));
 			}
 
 			/**
 			 * Filter by user role
 			 *
-			 * Example:
-			 * ADMIN, USER, MANAGER
+			 * Example: ADMIN, USER, MANAGER
 			 */
 			if (role != null) {
 				predicates.add(cb.equal(root.get("role"), role));
@@ -103,18 +95,14 @@ public class UserSpecification {
 			 * Filter records created after or equal to a specific date
 			 */
 			if (fromDate != null) {
-				predicates.add(
-						cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate)
-				);
+				predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
 			}
 
 			/**
 			 * Filter records created before or equal to a specific date
 			 */
 			if (toDate != null) {
-				predicates.add(
-						cb.lessThanOrEqualTo(root.get("createdAt"), toDate)
-				);
+				predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
 			}
 
 			/**

@@ -1,7 +1,6 @@
 package userservice.dtos;
 
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 /**
@@ -34,7 +33,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 
-public class ErrorResponse {
+public class UserErrorResponse {
 
 	/**
 	 * Timestamp when the error occurred.
