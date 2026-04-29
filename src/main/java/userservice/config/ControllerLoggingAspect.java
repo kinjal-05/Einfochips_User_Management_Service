@@ -21,8 +21,6 @@ import lombok.extern.slf4j.Slf4j;
  * returned by controller 4. Capture and log exceptions globally at controller
  * level
  *
- * This removes the need for repetitive logging inside controllers and ensures
- * consistent logging format across the application.
  */
 @Aspect
 @Component
@@ -62,10 +60,8 @@ public class ControllerLoggingAspect {
 
 		try {
 			Object result = joinPoint.proceed();
-
 			log.info("CONTROLLER END --> {} {} | TIME={}ms | RESPONSE={}", method, path,
 					(System.currentTimeMillis() - start), result);
-
 			return result;
 
 		} catch (Exception ex) {
