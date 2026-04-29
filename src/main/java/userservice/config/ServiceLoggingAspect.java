@@ -17,9 +17,6 @@ import lombok.extern.slf4j.Slf4j;
  * execution time of service methods 3. Log method exit with result 4. Capture
  * and log exceptions for debugging
  *
- * This ensures: - No repetitive logging in service classes - Consistent log
- * structure across all business logic - Easier debugging and performance
- * tracking
  */
 @Aspect
 @Component
